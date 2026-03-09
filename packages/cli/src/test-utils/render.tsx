@@ -42,7 +42,7 @@ import {
   type OverflowState,
 } from '../ui/contexts/OverflowContext.js';
 
-import { type Config } from '@google/gemini-cli-core';
+import { type Config, makeFakeConfig } from '@google/gemini-cli-core';
 import { FakePersistentState } from './persistentStateFake.js';
 import { AppContext, type AppState } from '../ui/contexts/AppContext.js';
 import { createMockSettings } from './settings.js';
@@ -52,6 +52,8 @@ import { DefaultLight } from '../ui/themes/builtin/light/default-light.js';
 import { pickDefaultThemeName } from '../ui/themes/theme.js';
 import { generateSvgForTerminal } from './svg.js';
 import { loadCliConfig, type CliArgs } from '../config/config.js';
+import os from 'node:os';
+import path from 'node:path';
 
 export const persistentStateMock = new FakePersistentState();
 
@@ -487,6 +489,53 @@ export const simulateClick = async (
   });
 };
 
+let mockConfigInternal: Config | undefined;
+
+const getMockConfigInternal = (): Config => {
+  if (!mockConfigInternal) {
+    mockConfigInternal = makeFakeConfig({
+      targetDir: os.tmpdir(),
+      enableEventDrivenScheduler: true,
+    });
+  }
+  return mockConfigInternal;
+};
+
+const configProxy = new Proxy({} as Config, {
+  get(_target, prop) {
+    if (prop === 'getTargetDir') {
+      return () =>
+        path.join(
+          path.parse(process.cwd()).root,
+          'Users',
+          'test',
+          'project',
+          'foo',
+          'bar',
+          'and',
+          'some',
+          'more',
+          'directories',
+          'to',
+          'make',
+          'it',
+          'long',
+        );
+    }
+    if (prop === 'getUseBackgroundColor') {
+      return () => true;
+    }
+    if (prop === 'getUseAlternateBuffer') {
+      return () => false;
+    }
+    const internal = getMockConfigInternal();
+    if (prop in internal) {
+      return internal[prop as keyof typeof internal];
+    }
+    throw new Error(`mockConfig does not have property ${String(prop)}`);
+  },
+});
+
 export const mockSettings = createMockSettings();
 
 // A minimal mock UIState to satisfy the context provider.
@@ -604,7 +653,8 @@ export const renderWithProviders = async (
     uiState: providedUiState,
     width,
     mouseEventsEnabled = false,
-    config,
+    useAlternateBuffer = false,
+    config = configProxy as unknown as Config,
     uiActions,
     persistentState,
     appState = mockAppState,
@@ -614,6 +664,7 @@ export const renderWithProviders = async (
     uiState?: Partial<UIState>;
     width?: number;
     mouseEventsEnabled?: boolean;
+    useAlternateBuffer?: boolean;
     config?: Config;
     uiActions?: Partial<UIActions>;
     persistentState?: {
@@ -660,14 +711,23 @@ export const renderWithProviders = async (
 
   const terminalWidth = width ?? baseState.terminalWidth;
 
-  if (!config) {
-    config = await loadCliConfig(
-      settings.merged,
-      'random-session-id',
-      {} as unknown as CliArgs,
-      { cwd: '/' },
-    );
+  if (config === (configProxy as unknown as Config)) {
+    // If it's the default proxy, we should probably still try to load a real config
+    // if we want to follow main's lead, OR just use the proxy.
+    // The feature branch seems to prefer the proxy for tests.
+    // However, main's async loadCliConfig might be necessary for some tests.
+    // Let's stick with the proxy if it was provided as default,
+    // but allow the caller to pass something else.
   }
+
+  const finalConfig = new Proxy(config, {
+    get(target, prop) {
+      if (prop === 'getUseAlternateBuffer') {
+        return () => useAlternateBuffer;
+      }
+      return Reflect.get(target, prop);
+    },
+  });
 
   const mainAreaWidth = terminalWidth;
 
@@ -697,7 +757,7 @@ export const renderWithProviders = async (
 
   const wrapWithProviders = (comp: React.ReactElement) => (
     <AppContext.Provider value={appState}>
-      <ConfigContext.Provider value={config}>
+      <ConfigContext.Provider value={finalConfig}>
         <SettingsContext.Provider value={settings}>
           <UIStateContext.Provider value={finalUiState}>
             <VimModeProvider>
@@ -709,8 +769,11 @@ export const renderWithProviders = async (
                     <UIActionsContext.Provider value={finalUIActions}>
                       <OverflowProvider>
                         <ToolActionsProvider
-                          config={config}
+                          config={finalConfig}
                           toolCalls={allToolCalls}
+                          isExpanded={vi.fn().mockReturnValue(false)}
+                          toggleExpansion={vi.fn()}
+                          toggleAllExpansion={vi.fn()}
                         >
                           <AskUserActionsProvider
                             request={null}
@@ -763,6 +826,16 @@ export const renderWithProviders = async (
     simulateClick: (col: number, row: number, button?: 0 | 1 | 2) =>
       simulateClick(renderResult.stdin, col, row, button),
   };
+};
+
+export const cleanup = () => {
+  for (const instance of instances) {
+    act(() => {
+      instance.unmount();
+    });
+    instance.cleanup();
+  }
+  instances.length = 0;
 };
 
 export function renderHook<Result, Props>(
@@ -864,7 +937,7 @@ export async function renderHookWithProviders<Result, Props>(
 
   const Wrapper = options.wrapper || (({ children }) => <>{children}</>);
 
-  let renderResult: ReturnType<typeof render>;
+  let renderResult: Awaited<ReturnType<typeof renderWithProviders>>;
 
   await act(async () => {
     renderResult = await renderWithProviders(

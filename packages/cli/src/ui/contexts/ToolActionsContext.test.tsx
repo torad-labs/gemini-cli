@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { act } from 'react';
+import { act, useState, useCallback } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '../../test-utils/render.js';
 import { waitFor } from '../../test-utils/async.js';
@@ -72,16 +72,60 @@ describe('ToolActionsContext', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default to a pending promise to avoid unwanted async state updates in tests
+    // that don't specifically test the IdeClient initialization.
+    vi.mocked(IdeClient.getInstance).mockReturnValue(new Promise(() => {}));
   });
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <ToolActionsProvider config={mockConfig} toolCalls={mockToolCalls}>
-      {children}
-    </ToolActionsProvider>
-  );
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
+
+    const isExpanded = useCallback(
+      (callId: string) => expandedTools.has(callId),
+      [expandedTools],
+    );
+
+    const toggleExpansion = useCallback((callId: string) => {
+      setExpandedTools((prev) => {
+        const next = new Set(prev);
+        if (next.has(callId)) {
+          next.delete(callId);
+        } else {
+          next.add(callId);
+        }
+        return next;
+      });
+    }, []);
+
+    const toggleAllExpansion = useCallback((callIds: string[]) => {
+      setExpandedTools((prev) => {
+        const next = new Set(prev);
+        const anyCollapsed = callIds.some((id) => !next.has(id));
+
+        if (anyCollapsed) {
+          callIds.forEach((id) => next.add(id));
+        } else {
+          callIds.forEach((id) => next.delete(id));
+        }
+        return next;
+      });
+    }, []);
+
+    return (
+      <ToolActionsProvider
+        config={mockConfig}
+        toolCalls={mockToolCalls}
+        isExpanded={isExpanded}
+        toggleExpansion={toggleExpansion}
+        toggleAllExpansion={toggleAllExpansion}
+      >
+        {children}
+      </ToolActionsProvider>
+    );
+  };
 
   it('publishes to MessageBus for tools with correlationId', async () => {
-    const { result } = renderHook(() => useToolActions(), { wrapper });
+    const { result } = renderHook(() => useToolActions(), { wrapper: Wrapper });
 
     await result.current.confirm(
       'modern-call',
@@ -99,7 +143,7 @@ describe('ToolActionsContext', () => {
   });
 
   it('handles cancel by calling confirm with Cancel outcome', async () => {
-    const { result } = renderHook(() => useToolActions(), { wrapper });
+    const { result } = renderHook(() => useToolActions(), { wrapper: Wrapper });
 
     await result.current.cancel('modern-call');
 
@@ -119,7 +163,7 @@ describe('ToolActionsContext', () => {
     vi.mocked(IdeClient.getInstance).mockResolvedValue(mockIdeClient);
     vi.mocked(mockConfig.getIdeMode).mockReturnValue(true);
 
-    const { result } = renderHook(() => useToolActions(), { wrapper });
+    const { result } = renderHook(() => useToolActions(), { wrapper: Wrapper });
 
     // Wait for IdeClient initialization in useEffect
     await act(async () => {
@@ -157,7 +201,7 @@ describe('ToolActionsContext', () => {
     vi.mocked(IdeClient.getInstance).mockResolvedValue(mockIdeClient);
     vi.mocked(mockConfig.getIdeMode).mockReturnValue(true);
 
-    const { result } = renderHook(() => useToolActions(), { wrapper });
+    const { result } = renderHook(() => useToolActions(), { wrapper: Wrapper });
 
     // Wait for initialization
     await act(async () => {
@@ -204,7 +248,13 @@ describe('ToolActionsContext', () => {
 
     const { result } = renderHook(() => useToolActions(), {
       wrapper: ({ children }) => (
-        <ToolActionsProvider config={mockConfig} toolCalls={[legacyTool]}>
+        <ToolActionsProvider
+          config={mockConfig}
+          toolCalls={[legacyTool]}
+          isExpanded={vi.fn().mockReturnValue(false)}
+          toggleExpansion={vi.fn()}
+          toggleAllExpansion={vi.fn()}
+        >
           {children}
         </ToolActionsProvider>
       ),
@@ -222,5 +272,59 @@ describe('ToolActionsContext', () => {
       undefined,
     );
     expect(mockMessageBus.publish).not.toHaveBeenCalled();
+  });
+
+  describe('toggleAllExpansion', () => {
+    it('expands all when none are expanded', () => {
+      const { result } = renderHook(() => useToolActions(), {
+        wrapper: Wrapper,
+      });
+
+      act(() => {
+        result.current.toggleAllExpansion(['modern-call', 'edit-call']);
+      });
+
+      expect(result.current.isExpanded('modern-call')).toBe(true);
+      expect(result.current.isExpanded('edit-call')).toBe(true);
+    });
+
+    it('expands all when some are expanded', () => {
+      const { result } = renderHook(() => useToolActions(), {
+        wrapper: Wrapper,
+      });
+
+      act(() => {
+        result.current.toggleExpansion('modern-call');
+      });
+      expect(result.current.isExpanded('modern-call')).toBe(true);
+      expect(result.current.isExpanded('edit-call')).toBe(false);
+
+      act(() => {
+        result.current.toggleAllExpansion(['modern-call', 'edit-call']);
+      });
+
+      expect(result.current.isExpanded('modern-call')).toBe(true);
+      expect(result.current.isExpanded('edit-call')).toBe(true);
+    });
+
+    it('collapses all when all are expanded', () => {
+      const { result } = renderHook(() => useToolActions(), {
+        wrapper: Wrapper,
+      });
+
+      act(() => {
+        result.current.toggleExpansion('modern-call');
+        result.current.toggleExpansion('edit-call');
+      });
+      expect(result.current.isExpanded('modern-call')).toBe(true);
+      expect(result.current.isExpanded('edit-call')).toBe(true);
+
+      act(() => {
+        result.current.toggleAllExpansion(['modern-call', 'edit-call']);
+      });
+
+      expect(result.current.isExpanded('modern-call')).toBe(false);
+      expect(result.current.isExpanded('edit-call')).toBe(false);
+    });
   });
 });

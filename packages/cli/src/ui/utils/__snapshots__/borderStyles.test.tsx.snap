@@ -11,7 +11,8 @@ exports[`MainContent tool group border SVG snapshots > should render SVG snapsho
 │ ⊶  google_web_search                                                                         │
 │                                                                                              │
 │ Searching...                                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯"
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+"
 `;
 
 exports[`MainContent tool group border SVG snapshots > should render SVG snapshot for a shell tool 1`] = `
@@ -25,7 +26,8 @@ exports[`MainContent tool group border SVG snapshots > should render SVG snapsho
 │ ⊶  run_shell_command                                                                         │
 │                                                                                              │
 │ Running command...                                                                           │
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯"
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+"
 `;
 
 exports[`MainContent tool group border SVG snapshots > should render SVG snapshot for an empty slice following a search tool 1`] = `
@@ -39,5 +41,6 @@ exports[`MainContent tool group border SVG snapshots > should render SVG snapsho
 │ ⊶  google_web_search                                                                         │
 │                                                                                              │
 │ Searching...                                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯"
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+"
 `;

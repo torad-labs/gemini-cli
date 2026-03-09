@@ -48,11 +48,14 @@ interface ToolActionsContextValue {
   ) => Promise<void>;
   cancel: (callId: string) => Promise<void>;
   isDiffingEnabled: boolean;
+  isExpanded: (callId: string) => boolean;
+  toggleExpansion: (callId: string) => void;
+  toggleAllExpansion: (callIds: string[]) => void;
 }
 
 const ToolActionsContext = createContext<ToolActionsContextValue | null>(null);
 
-export const useToolActions = () => {
+export const useToolActions = (): ToolActionsContextValue => {
   const context = useContext(ToolActionsContext);
   if (!context) {
     throw new Error('useToolActions must be used within a ToolActionsProvider');
@@ -64,12 +67,22 @@ interface ToolActionsProviderProps {
   children: React.ReactNode;
   config: Config;
   toolCalls: IndividualToolCallDisplay[];
+  isExpanded: (callId: string) => boolean;
+  toggleExpansion: (callId: string) => void;
+  toggleAllExpansion: (callIds: string[]) => void;
 }
 
 export const ToolActionsProvider: React.FC<ToolActionsProviderProps> = (
   props: ToolActionsProviderProps,
 ) => {
-  const { children, config, toolCalls } = props;
+  const {
+    children,
+    config,
+    toolCalls,
+    isExpanded,
+    toggleExpansion,
+    toggleAllExpansion,
+  } = props;
 
   // Hoist IdeClient logic here to keep UI pure
   const [ideClient, setIdeClient] = useState<IdeClient | null>(null);
@@ -164,7 +177,16 @@ export const ToolActionsProvider: React.FC<ToolActionsProviderProps> = (
   );
 
   return (
-    <ToolActionsContext.Provider value={{ confirm, cancel, isDiffingEnabled }}>
+    <ToolActionsContext.Provider
+      value={{
+        confirm,
+        cancel,
+        isDiffingEnabled,
+        isExpanded,
+        toggleExpansion,
+        toggleAllExpansion,
+      }}
+    >
       {children}
     </ToolActionsContext.Provider>
   );

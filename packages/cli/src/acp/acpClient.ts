@@ -97,6 +97,8 @@ export async function runAcpClient(
   await connection.closed.finally(runExitCleanup);
 }
 
+let callIdCounter = 0;
+
 export class GeminiAgent {
   private sessions: Map<string, Session> = new Map();
   private clientCapabilities: acp.ClientCapabilities | undefined;
@@ -837,7 +839,7 @@ export class Session {
     promptId: string,
     fc: FunctionCall,
   ): Promise<Part[]> {
-    const callId = fc.id ?? `${fc.name}-${Date.now()}`;
+    const callId = fc.id ?? `${fc.name}-${Date.now()}-${++callIdCounter}`;
     const args = fc.args ?? {};
 
     const startTime = Date.now();
@@ -1310,7 +1312,7 @@ export class Session {
         include: pathSpecsToRead,
       };
 
-      const callId = `${readManyFilesTool.name}-${Date.now()}`;
+      const callId = `${readManyFilesTool.name}-${Date.now()}-${++callIdCounter}`;
 
       try {
         const invocation = readManyFilesTool.build(toolArgs);

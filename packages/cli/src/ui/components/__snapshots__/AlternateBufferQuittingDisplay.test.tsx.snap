@@ -14,6 +14,7 @@ Tips for getting started:
 3. Ask coding questions, edit code or run commands
 4. Be specific for the best results
 
+
 Action Required (was prompted):
 
 ?  confirming_tool Confirming tool description
@@ -37,10 +38,12 @@ Tips for getting started:
 │ ✓  tool1 Description for tool 1                                          │
 │                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────╯
+
 ╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  tool2 Description for tool 2                                          │
 │                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────╯
+
 ╭──────────────────────────────────────────────────────────────────────────╮
 │ o  tool3 Description for tool 3                                          │
 │                                                                          │
@@ -81,6 +84,7 @@ Tips for getting started:
 │ ✓  tool1 Description for tool 1                                          │
 │                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────╯
+
 ╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  tool2 Description for tool 2                                          │
 │                                                                          │

@@ -259,6 +259,39 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const [adminSettingsChanged, setAdminSettingsChanged] = useState(false);
 
+  const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
+
+  const toggleExpansion = useCallback((callId: string) => {
+    setExpandedTools((prev) => {
+      const next = new Set(prev);
+      if (next.has(callId)) {
+        next.delete(callId);
+      } else {
+        next.add(callId);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAllExpansion = useCallback((callIds: string[]) => {
+    setExpandedTools((prev) => {
+      const next = new Set(prev);
+      const anyCollapsed = callIds.some((id) => !next.has(id));
+
+      if (anyCollapsed) {
+        callIds.forEach((id) => next.add(id));
+      } else {
+        callIds.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
+  }, []);
+
+  const isExpanded = useCallback(
+    (callId: string) => expandedTools.has(callId),
+    [expandedTools],
+  );
+
   const [shellModeActive, setShellModeActive] = useState(false);
   const [modelSwitchedFromQuotaError, setModelSwitchedFromQuotaError] =
     useState<boolean>(false);
@@ -1682,8 +1715,18 @@ Logging in with Google... Restarting Gemini CLI to continue.
     errorVerbosity: settings.merged.ui.errorVerbosity,
   });
 
+  const pendingHistoryItems = useMemo(
+    () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
+    [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems],
+  );
+
   const handleGlobalKeypress = useCallback(
     (key: Key): boolean => {
+      // Debug log keystrokes if enabled
+      if (settings.merged.general.debugKeystrokeLogging) {
+        debugLogger.log('[DEBUG] Keystroke:', JSON.stringify(key));
+      }
+
       if (shortcutsHelpVisible && isHelpDismissKey(key)) {
         setShortcutsHelpVisible(false);
       }
@@ -1724,6 +1767,38 @@ Logging in with Google... Restarting Gemini CLI to continue.
         if (keyMatchers[Command.SHOW_MORE_LINES](key)) {
           // If the user manually collapses the view, show the hint and reset the x-second timer.
           triggerExpandHint(true);
+
+          // Find the boundary of the last user prompt
+          let lastUserPromptIndex = -1;
+          for (let i = historyManager.history.length - 1; i >= 0; i--) {
+            const type = historyManager.history[i].type;
+            if (type === 'user' || type === 'user_shell') {
+              lastUserPromptIndex = i;
+              break;
+            }
+          }
+
+          const targetToolCallIds: string[] = [];
+          // Collect IDs from history after last user prompt
+          historyManager.history.forEach((item, index) => {
+            if (index > lastUserPromptIndex && item.type === 'tool_group') {
+              item.tools.forEach((t) => {
+                if (t.callId) targetToolCallIds.push(t.callId);
+              });
+            }
+          });
+          // Collect IDs from pending items
+          pendingHistoryItems.forEach((item) => {
+            if (item.type === 'tool_group') {
+              item.tools.forEach((t) => {
+                if (t.callId) targetToolCallIds.push(t.callId);
+              });
+            }
+          });
+
+          if (targetToolCallIds.length > 0) {
+            toggleAllExpansion(targetToolCallIds);
+          }
         }
         if (!isAlternateBuffer) {
           refreshStatic();
@@ -1773,9 +1848,46 @@ Logging in with Google... Restarting Gemini CLI to continue.
         setConstrainHeight(false);
         // If the user manually expands the view, show the hint and reset the x-second timer.
         triggerExpandHint(true);
-        if (!isAlternateBuffer) {
-          refreshStatic();
+
+        // Find the boundary of the last user prompt
+        let lastUserPromptIndex = -1;
+        for (let i = historyManager.history.length - 1; i >= 0; i--) {
+          const type = historyManager.history[i].type;
+          if (type === 'user' || type === 'user_shell') {
+            lastUserPromptIndex = i;
+            break;
+          }
         }
+
+        const targetToolCallIds: string[] = [];
+        // Collect IDs from history after last user prompt
+        historyManager.history.forEach((item, index) => {
+          if (index > lastUserPromptIndex && item.type === 'tool_group') {
+            item.tools.forEach((t) => {
+              if (t.callId) targetToolCallIds.push(t.callId);
+            });
+          }
+        });
+        // Collect IDs from pending items
+        pendingHistoryItems.forEach((item) => {
+          if (item.type === 'tool_group') {
+            item.tools.forEach((t) => {
+              if (t.callId) targetToolCallIds.push(t.callId);
+            });
+          }
+        });
+
+        if (targetToolCallIds.length > 0) {
+          toggleAllExpansion(targetToolCallIds);
+        }
+
+        // Force layout refresh after a short delay to allow the terminal layout to settle.
+        // This prevents the "blank screen" issue by ensuring Ink re-measures after
+        // any async subview updates are complete.
+        setTimeout(() => {
+          refreshStatic();
+        }, 500);
+
         return true;
       } else if (
         (keyMatchers[Command.FOCUS_SHELL_INPUT](key) ||
@@ -1862,6 +1974,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       activePtyId,
       handleSuspend,
       embeddedShellFocused,
+      settings.merged.general.debugKeystrokeLogging,
       refreshStatic,
       setCopyModeEnabled,
       tabFocusTimeoutRef,
@@ -1879,6 +1992,9 @@ Logging in with Google... Restarting Gemini CLI to continue.
       triggerExpandHint,
       keyMatchers,
       isHelpDismissKey,
+      historyManager.history,
+      pendingHistoryItems,
+      toggleAllExpansion,
     ],
   );
 
@@ -2021,11 +2137,6 @@ Logging in with Google... Restarting Gemini CLI to continue.
     isSessionBrowserOpen ||
     authState === AuthState.AwaitingApiKeyInput ||
     !!newAgents;
-
-  const pendingHistoryItems = useMemo(
-    () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
-    [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems],
-  );
 
   const hasPendingToolConfirmation = useMemo(
     () => isToolAwaitingConfirmation(pendingHistoryItems),
@@ -2597,7 +2708,13 @@ Logging in with Google... Restarting Gemini CLI to continue.
               startupWarnings: props.startupWarnings || [],
             }}
           >
-            <ToolActionsProvider config={config} toolCalls={allToolCalls}>
+            <ToolActionsProvider
+              config={config}
+              toolCalls={allToolCalls}
+              isExpanded={isExpanded}
+              toggleExpansion={toggleExpansion}
+              toggleAllExpansion={toggleAllExpansion}
+            >
               <ShellFocusContext.Provider value={isFocused}>
                 <App key={`app-${forceRerenderKey}`} />
               </ShellFocusContext.Provider>
