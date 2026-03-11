@@ -21,10 +21,11 @@ import type { UserTierId, GeminiUserTier } from '../code_assist/types.js';
 import { LoggingContentGenerator } from './loggingContentGenerator.js';
 import { InstallationManager } from '../utils/installationManager.js';
 import { FakeContentGenerator } from './fakeContentGenerator.js';
+import { FallbackContentGenerator } from './fallbackContentGenerator.js';
 import { parseCustomHeaders } from '../utils/customHeaderUtils.js';
 import { determineSurface } from '../utils/surface.js';
 import { RecordingContentGenerator } from './recordingContentGenerator.js';
-import { getVersion, resolveModel } from '../../index.js';
+import { debugLogger, getVersion, resolveModel } from '../../index.js';
 import type { LlmRole } from '../telemetry/llmRole.js';
 
 /**
@@ -46,6 +47,8 @@ export interface ContentGenerator {
   countTokens(request: CountTokensParameters): Promise<CountTokensResponse>;
 
   embedContent(request: EmbedContentParameters): Promise<EmbedContentResponse>;
+
+  getSentRequests?(): GenerateContentParameters[];
 
   userTier?: UserTierId;
 
@@ -166,12 +169,6 @@ export async function createContentGenerator(
   sessionId?: string,
 ): Promise<ContentGenerator> {
   const generator = await (async () => {
-    if (gcConfig.fakeResponses) {
-      const fakeGenerator = await FakeContentGenerator.fromFile(
-        gcConfig.fakeResponses,
-      );
-      return new LoggingContentGenerator(fakeGenerator, gcConfig);
-    }
     const version = await getVersion();
     const model = resolveModel(
       gcConfig.getModel(),
@@ -208,23 +205,21 @@ export async function createContentGenerator(
     ) {
       baseHeaders['Authorization'] = `Bearer ${config.apiKey}`;
     }
+
+    let realGenerator: ContentGenerator;
+
     if (
       config.authType === AuthType.LOGIN_WITH_GOOGLE ||
       config.authType === AuthType.COMPUTE_ADC
     ) {
       const httpOptions = { headers: baseHeaders };
-      return new LoggingContentGenerator(
-        await createCodeAssistContentGenerator(
-          httpOptions,
-          config.authType,
-          gcConfig,
-          sessionId,
-        ),
+      realGenerator = await createCodeAssistContentGenerator(
+        httpOptions,
+        config.authType,
         gcConfig,
+        sessionId,
       );
-    }
-
-    if (
+    } else if (
       config.authType === AuthType.USE_GEMINI ||
       config.authType === AuthType.USE_VERTEX_AI ||
       config.authType === AuthType.GATEWAY
@@ -268,11 +263,28 @@ export async function createContentGenerator(
         httpOptions,
         ...(apiVersionEnv && { apiVersion: apiVersionEnv }),
       });
-      return new LoggingContentGenerator(googleGenAI.models, gcConfig);
+      realGenerator = googleGenAI.models;
+    } else {
+      throw new Error(
+        `Error creating contentGenerator: Unsupported authType: ${config.authType}`,
+      );
     }
-    throw new Error(
-      `Error creating contentGenerator: Unsupported authType: ${config.authType}`,
-    );
+
+    let targetGenerator = realGenerator;
+
+    if (gcConfig.fakeResponses) {
+      if (Array.isArray(gcConfig.fakeResponses)) {
+        debugLogger.log(`[createContentGenerator] Instantiating FakeContentGenerator with ${gcConfig.fakeResponses.length} in-memory mock responses.`);
+        const fakeGen = new FakeContentGenerator(gcConfig.fakeResponses);
+        targetGenerator = new FallbackContentGenerator(fakeGen, realGenerator);
+      } else {
+        debugLogger.log(`[createContentGenerator] Instantiating FakeContentGenerator from file: ${gcConfig.fakeResponses}`);
+        const fakeGen = await FakeContentGenerator.fromFile(gcConfig.fakeResponses);
+        targetGenerator = new FallbackContentGenerator(fakeGen, realGenerator);
+      }
+    }
+
+    return new LoggingContentGenerator(targetGenerator, gcConfig);
   })();
 
   if (gcConfig.recordResponses) {

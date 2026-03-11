@@ -21,7 +21,6 @@ import { getErrorMessage } from '../utils/errors.js';
 import { ApprovalMode } from '../policy/types.js';
 import { getResponseText } from '../utils/partUtils.js';
 import { fetchWithTimeout, isPrivateIp } from '../utils/fetch.js';
-import { truncateString } from '../utils/textUtils.js';
 import { convert } from 'html-to-text';
 import {
   logWebFetchFallbackAttempt,
@@ -40,11 +39,10 @@ import { LRUCache } from 'mnemonist';
 import type { AgentLoopContext } from '../config/agent-loop-context.js';
 
 const URL_FETCH_TIMEOUT_MS = 10000;
-const MAX_CONTENT_LENGTH = 250000;
+
 const MAX_EXPERIMENTAL_FETCH_SIZE = 10 * 1024 * 1024; // 10MB
 const USER_AGENT =
   'Mozilla/5.0 (compatible; Google-Gemini-CLI/1.0; +https://github.com/google-gemini/gemini-cli)';
-const TRUNCATION_WARNING = '\n\n... [Content truncated due to size limit] ...';
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
@@ -331,9 +329,7 @@ class WebFetchToolInvocation extends BaseToolInvocation<
       textContent = rawContent;
     }
 
-    // Cap at MAX_CONTENT_LENGTH initially to avoid excessive memory usage
-    // before the global budget allocation.
-    return truncateString(textContent, MAX_CONTENT_LENGTH, '');
+    return textContent;
   }
 
   private filterAndValidateUrls(urls: string[]): {
@@ -399,28 +395,10 @@ class WebFetchToolInvocation extends BaseToolInvocation<
       };
     }
 
-    // Smart Budget Allocation (Water-filling algorithm) for successes
-    const sortedSuccesses = [...successes].sort(
-      (a, b) => a.content.length - b.content.length,
-    );
-
-    let remainingBudget = MAX_CONTENT_LENGTH;
-    let remainingUrls = sortedSuccesses.length;
     const finalContentsByUrl = new Map<string, string>();
 
-    for (const success of sortedSuccesses) {
-      const fairShare = Math.floor(remainingBudget / remainingUrls);
-      const allocated = Math.min(success.content.length, fairShare);
-
-      const truncated = truncateString(
-        success.content,
-        allocated,
-        TRUNCATION_WARNING,
-      );
-
-      finalContentsByUrl.set(success.url, truncated);
-      remainingBudget -= truncated.length;
-      remainingUrls--;
+    for (const success of successes) {
+      finalContentsByUrl.set(success.url, success.content);
     }
 
     const aggregatedContent = uniqueUrls
@@ -663,7 +641,7 @@ ${aggregatedContent}
         });
         const errorContent = `Request failed with status ${status}
 Headers: ${JSON.stringify(headers, null, 2)}
-Response: ${truncateString(rawResponseText, 10000, '\n\n... [Error response truncated] ...')}`;
+Response: ${rawResponseText}`;
         debugLogger.error(
           `[WebFetchTool] Experimental fetch failed with status ${status} for ${url}`,
         );
@@ -679,11 +657,7 @@ Response: ${truncateString(rawResponseText, 10000, '\n\n... [Error response trun
         lowContentType.includes('text/plain') ||
         lowContentType.includes('application/json')
       ) {
-        const text = truncateString(
-          bodyBuffer.toString('utf8'),
-          MAX_CONTENT_LENGTH,
-          TRUNCATION_WARNING,
-        );
+        const text = bodyBuffer.toString('utf8');
         return {
           llmContent: text,
           returnDisplay: `Fetched ${contentType} content from ${url}`,
@@ -692,16 +666,12 @@ Response: ${truncateString(rawResponseText, 10000, '\n\n... [Error response trun
 
       if (lowContentType.includes('text/html')) {
         const html = bodyBuffer.toString('utf8');
-        const textContent = truncateString(
-          convert(html, {
-            wordwrap: false,
-            selectors: [
-              { selector: 'a', options: { ignoreHref: false, baseUrl: url } },
-            ],
-          }),
-          MAX_CONTENT_LENGTH,
-          TRUNCATION_WARNING,
-        );
+        const textContent = convert(html, {
+          wordwrap: false,
+          selectors: [
+            { selector: 'a', options: { ignoreHref: false, baseUrl: url } },
+          ],
+        });
         return {
           llmContent: textContent,
           returnDisplay: `Fetched and converted HTML content from ${url}`,
@@ -726,11 +696,7 @@ Response: ${truncateString(rawResponseText, 10000, '\n\n... [Error response trun
       }
 
       // Fallback for unknown types - try as text
-      const text = truncateString(
-        bodyBuffer.toString('utf8'),
-        MAX_CONTENT_LENGTH,
-        TRUNCATION_WARNING,
-      );
+      const text = bodyBuffer.toString('utf8');
       return {
         llmContent: text,
         returnDisplay: `Fetched ${contentType || 'unknown'} content from ${url}`,
