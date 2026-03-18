@@ -24,7 +24,6 @@ import { InputPrompt } from './InputPrompt.js';
 import { Footer } from './Footer.js';
 import { ShowMoreLines } from './ShowMoreLines.js';
 import { QueuedMessageDisplay } from './QueuedMessageDisplay.js';
-import { ContextUsageDisplay } from './ContextUsageDisplay.js';
 import { HorizontalLine } from './shared/HorizontalLine.js';
 import { OverflowProvider } from '../contexts/OverflowContext.js';
 import { isNarrowWidth } from '../utils/isNarrowWidth.js';
@@ -38,7 +37,6 @@ import { StreamingState, type HistoryItemToolGroup } from '../types.js';
 import { ConfigInitDisplay } from '../components/ConfigInitDisplay.js';
 import { TodoTray } from './messages/Todo.js';
 import { getInlineThinkingMode } from '../utils/inlineThinkingMode.js';
-import { isContextUsageHigh } from '../utils/contextUsage.js';
 import { theme } from '../semantic-colors.js';
 
 export const Composer = ({ isFocused = true }: { isFocused?: boolean }) => {
@@ -142,14 +140,6 @@ export const Composer = ({ isFocused = true }: { isFocused?: boolean }) => {
     : modeBleedThrough;
   const hasMinimalStatusBleedThrough = shouldShowToast(uiState);
 
-  const showMinimalContextBleedThrough =
-    !settings.merged.ui.footer.hideContextPercentage &&
-    isContextUsageHigh(
-      uiState.sessionStats.lastPromptTokenCount,
-      typeof uiState.currentModel === 'string'
-        ? uiState.currentModel
-        : undefined,
-    );
   const hideShortcutsHintForSuggestions = hideUiDetailsForSuggestions;
   const isModelIdle = uiState.streamingState === StreamingState.Idle;
   const isBufferEmpty = uiState.buffer.text.length === 0;
@@ -180,9 +170,7 @@ export const Composer = ({ isFocused = true }: { isFocused?: boolean }) => {
   const showMinimalInlineLoading = !showUiDetails && showLoadingIndicator;
   const showMinimalBleedThroughRow =
     !showUiDetails &&
-    (showMinimalModeBleedThrough ||
-      hasMinimalStatusBleedThrough ||
-      showMinimalContextBleedThrough);
+    (showMinimalModeBleedThrough || hasMinimalStatusBleedThrough);
   const showMinimalMetaRow =
     !showUiDetails &&
     (showMinimalInlineLoading ||
@@ -307,29 +295,14 @@ export const Composer = ({ isFocused = true }: { isFocused?: boolean }) => {
                 </Box>
               )}
             </Box>
-            {(showMinimalContextBleedThrough ||
-              shouldReserveSpaceForShortcutsHint) && (
+            {shouldReserveSpaceForShortcutsHint && (
               <Box
                 marginTop={isNarrow && showMinimalBleedThroughRow ? 1 : 0}
                 flexDirection={isNarrow ? 'column' : 'row'}
                 alignItems={isNarrow ? 'flex-start' : 'flex-end'}
                 minHeight={1}
               >
-                {showMinimalContextBleedThrough && (
-                  <ContextUsageDisplay
-                    promptTokenCount={uiState.sessionStats.lastPromptTokenCount}
-                    model={uiState.currentModel}
-                    terminalWidth={uiState.terminalWidth}
-                  />
-                )}
-                <Box
-                  marginLeft={
-                    showMinimalContextBleedThrough && !isNarrow ? 1 : 0
-                  }
-                  marginTop={showMinimalContextBleedThrough && isNarrow ? 1 : 0}
-                >
-                  {showShortcutsHint && <ShortcutsHint />}
-                </Box>
+                <Box>{showShortcutsHint && <ShortcutsHint />}</Box>
               </Box>
             )}
           </Box>

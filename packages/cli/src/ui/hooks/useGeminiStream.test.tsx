@@ -57,7 +57,6 @@ import { MessageType, StreamingState } from '../types.js';
 
 import type { LoadedSettings } from '../../config/settings.js';
 import { findLastSafeSplitPoint } from '../utils/markdownUtilities.js';
-import { theme } from '../semantic-colors.js';
 
 // --- MOCKS ---
 const mockSendMessageStream = vi
@@ -324,6 +323,7 @@ describe('useGeminiStream', () => {
     })),
     getIdeMode: vi.fn(() => false),
     getEnableHooks: vi.fn(() => false),
+    getShowContextWindowWarning: vi.fn(() => false),
   } as unknown as Config;
 
   beforeEach(() => {
@@ -2346,22 +2346,32 @@ describe('useGeminiStream', () => {
 
       it.each([
         {
-          name: 'without suggestion when remaining tokens are > 75% of limit',
+          name: 'without suggestion when showContextWindowWarning is false',
           requestTokens: 20,
           remainingTokens: 80,
           expectedMessage:
-            'Sending this message (20 tokens) might exceed the context window limit (80 tokens left).',
+            'Context window is 20% full. Message size (20 tokens) might exceed the limit.',
+          showWarning: false,
         },
         {
-          name: 'with suggestion when remaining tokens are < 75% of limit',
+          name: 'with suggestion when showContextWindowWarning is true',
           requestTokens: 30,
           remainingTokens: 70,
           expectedMessage:
-            'Sending this message (30 tokens) might exceed the context window limit (70 tokens left). Please try reducing the size of your message or use the `/compress` command to compress the chat history.',
+            'Context window is 30% full. Message size (30 tokens) might exceed the limit. Please try reducing the size of your message or use the `/compress` command to compress the chat history.',
+          showWarning: true,
         },
       ])(
         'should add message $name',
-        async ({ requestTokens, remainingTokens, expectedMessage }) => {
+        async ({
+          requestTokens,
+          remainingTokens,
+          expectedMessage,
+          showWarning,
+        }) => {
+          vi.mocked(mockConfig.getShowContextWindowWarning).mockReturnValue(
+            showWarning,
+          );
           mockSendMessageStream.mockReturnValue(
             (async function* () {
               yield {
@@ -2465,10 +2475,14 @@ describe('useGeminiStream', () => {
       await waitFor(() => {
         expect(mockAddItem).toHaveBeenCalledWith(
           expect.objectContaining({
-            type: MessageType.INFO,
-            text: 'Context compressed from 10% to 5%.',
-            secondaryText: 'Change threshold in /settings.',
-            color: theme.status.warning,
+            type: MessageType.COMPRESSION,
+            compression: {
+              isPending: false,
+              originalTokenCount: 1000,
+              newTokenCount: 500,
+              compressionStatus: 'compressed',
+              model: 'gemini-2.5-pro',
+            },
           }),
           expect.any(Number),
         );
