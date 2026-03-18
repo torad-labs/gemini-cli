@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`DenseToolMessage > Toggleable Diff View (Alternate Buffer) > hides diff content by default when in alternate buffer mode 1`] = `
-"  ✓  test-tool  test.ts → Accepted [click here to show details]
+"  ✓  test-tool  test.ts → Accepted
 "
 `;
 
@@ -32,7 +32,10 @@ exports[`DenseToolMessage > renders correctly for Edit tool using confirmationDe
 `;
 
 exports[`DenseToolMessage > renders correctly for Errored Edit tool 1`] = `
-"  x  Edit  styles.scss → Failed [click here to show details]
+"  x  Edit  styles.scss → Failed (+1, -1)
+
+      1 - old line
+      1 + new line
 "
 `;
 
@@ -119,7 +122,7 @@ exports[`DenseToolMessage > renders generic failure message for error status wit
 `;
 
 exports[`DenseToolMessage > renders generic output message for unknown object results 1`] = `
-"  ✓  test-tool  Test description → Output received
+"  ✓  test-tool  Test description → Returned (possible empty result)
 "
 `;
 

@@ -23,6 +23,7 @@ import {
   getToolSuggestion,
   isToolCallResponseInfo,
 } from '../utils/tool-utils.js';
+import { getDiffStatFromPatch } from '../tools/diffOptions.js';
 import type { ToolConfirmationRequest } from '../confirmation-bus/types.js';
 import { MessageBusType } from '../confirmation-bus/types.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
@@ -312,6 +313,12 @@ export class CoreToolScheduler {
                   waitingCall.confirmationDetails.originalContent,
                 newContent: waitingCall.confirmationDetails.newContent,
                 filePath: waitingCall.confirmationDetails.filePath,
+                // Derive stats from the patch if they aren't already present
+                diffStat:
+                  waitingCall.confirmationDetails.diffStat ??
+                  getDiffStatFromPatch(
+                    waitingCall.confirmationDetails.fileDiff,
+                  ),
               };
             }
           }

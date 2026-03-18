@@ -18,6 +18,9 @@ import type {
   ReadManyFilesResult,
 } from '../../types.js';
 
+import { makeFakeConfig } from '@google/gemini-cli-core';
+import { createMockSettings } from '../../../test-utils/settings.js';
+
 describe('DenseToolMessage', () => {
   const defaultProps = {
     callId: 'call-1',
@@ -29,7 +32,7 @@ describe('DenseToolMessage', () => {
   };
 
   it('renders correctly for a successful string result', async () => {
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage {...defaultProps} />,
     );
     await waitUntilReady();
@@ -42,7 +45,7 @@ describe('DenseToolMessage', () => {
 
   it('truncates long string results', async () => {
     const longResult = 'A'.repeat(200);
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={longResult as ToolResultDisplay}
@@ -57,7 +60,7 @@ describe('DenseToolMessage', () => {
 
   it('flattens newlines in string results', async () => {
     const multilineResult = 'Line 1\nLine 2';
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={multilineResult as ToolResultDisplay}
@@ -87,12 +90,12 @@ describe('DenseToolMessage', () => {
         model_removed_chars: 40,
       },
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={diffResult as ToolResultDisplay}
       />,
-      { useAlternateBuffer: false },
+      {},
     );
     await waitUntilReady();
     const output = lastFrame();
@@ -112,7 +115,7 @@ describe('DenseToolMessage', () => {
       originalContent: 'body { color: blue; }',
       newContent: 'body { color: red; }',
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         name="Edit"
@@ -122,7 +125,7 @@ describe('DenseToolMessage', () => {
           confirmationDetails as SerializableConfirmationDetails
         }
       />,
-      { useAlternateBuffer: false },
+      {},
     );
     await waitUntilReady();
     const output = lastFrame();
@@ -151,14 +154,14 @@ describe('DenseToolMessage', () => {
         model_removed_chars: 0,
       },
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         name="Edit"
         status={CoreToolCallStatus.Cancelled}
         resultDisplay={diffResult as ToolResultDisplay}
       />,
-      { useAlternateBuffer: false },
+      {},
     );
     await waitUntilReady();
     const output = lastFrame();
@@ -190,7 +193,7 @@ describe('DenseToolMessage', () => {
         model_removed_chars: 0,
       } as DiffStat,
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         name="Edit"
@@ -200,7 +203,7 @@ describe('DenseToolMessage', () => {
           confirmationDetails as unknown as SerializableConfirmationDetails
         }
       />,
-      { useAlternateBuffer: false },
+      {},
     );
     await waitUntilReady();
     const output = lastFrame();
@@ -227,14 +230,14 @@ describe('DenseToolMessage', () => {
         model_removed_chars: 0,
       },
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         name="WriteFile"
         status={CoreToolCallStatus.Success}
         resultDisplay={diffResult as ToolResultDisplay}
       />,
-      { useAlternateBuffer: false },
+      {},
     );
     await waitUntilReady();
     const output = lastFrame();
@@ -252,14 +255,14 @@ describe('DenseToolMessage', () => {
       originalContent: 'old content',
       newContent: 'new content',
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         name="WriteFile"
         status={CoreToolCallStatus.Cancelled}
         resultDisplay={diffResult as ToolResultDisplay}
       />,
-      { useAlternateBuffer: false },
+      {},
     );
     await waitUntilReady();
     const output = lastFrame();
@@ -278,8 +281,18 @@ describe('DenseToolMessage', () => {
       filePath: '/path/to/styles.scss',
       originalContent: 'old line',
       newContent: 'new line',
+      diffStat: {
+        user_added_lines: 1,
+        user_removed_lines: 1,
+        user_added_chars: 0,
+        user_removed_chars: 0,
+        model_added_lines: 0,
+        model_removed_lines: 0,
+        model_added_chars: 0,
+        model_removed_chars: 0,
+      },
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         name="Edit"
@@ -290,8 +303,7 @@ describe('DenseToolMessage', () => {
     await waitUntilReady();
     const output = lastFrame();
     expect(output).toContain('Edit');
-    expect(output).toContain('styles.scss');
-    expect(output).toContain('→ Failed');
+    expect(output).toContain('styles.scss → Failed (+1, -1)');
     expect(output).toMatchSnapshot();
   });
 
@@ -303,7 +315,7 @@ describe('DenseToolMessage', () => {
         { filePath: 'file2.ts', lineNumber: 20, line: 'match 2' },
       ],
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={grepResult as unknown as ToolResultDisplay}
@@ -323,7 +335,7 @@ describe('DenseToolMessage', () => {
       summary: 'Listed 2 files. (1 ignored)',
       files: ['file1.ts', 'dir1'],
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={lsResult as unknown as ToolResultDisplay}
@@ -345,7 +357,7 @@ describe('DenseToolMessage', () => {
       include: ['**/*.ts'],
       skipped: [{ path: 'skipped.bin', reason: 'binary' }],
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={rmfResult as unknown as ToolResultDisplay}
@@ -365,7 +377,7 @@ describe('DenseToolMessage', () => {
     const todoResult = {
       todos: [],
     };
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         resultDisplay={todoResult as ToolResultDisplay}
@@ -381,17 +393,17 @@ describe('DenseToolMessage', () => {
     const genericResult = {
       some: 'data',
     } as unknown as ToolResultDisplay;
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage {...defaultProps} resultDisplay={genericResult} />,
     );
     await waitUntilReady();
     const output = lastFrame();
-    expect(output).toContain('→ Output received');
+    expect(output).toContain('→ Returned (possible empty result)');
     expect(output).toMatchSnapshot();
   });
 
   it('renders correctly for error status with string message', async () => {
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         status={CoreToolCallStatus.Error}
@@ -405,7 +417,7 @@ describe('DenseToolMessage', () => {
   });
 
   it('renders generic failure message for error status without string message', async () => {
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         status={CoreToolCallStatus.Error}
@@ -419,7 +431,7 @@ describe('DenseToolMessage', () => {
   });
 
   it('does not render result arrow if resultDisplay is missing', async () => {
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <DenseToolMessage
         {...defaultProps}
         status={CoreToolCallStatus.Scheduled}
@@ -442,62 +454,60 @@ describe('DenseToolMessage', () => {
     };
 
     it('hides diff content by default when in alternate buffer mode', async () => {
-      const { lastFrame, waitUntilReady } = renderWithProviders(
+      const { lastFrame, waitUntilReady } = await renderWithProviders(
         <DenseToolMessage
           {...defaultProps}
           resultDisplay={diffResult as ToolResultDisplay}
           status={CoreToolCallStatus.Success}
         />,
-        { useAlternateBuffer: true },
+        {
+          config: makeFakeConfig({ useAlternateBuffer: true }),
+          settings: createMockSettings({ ui: { useAlternateBuffer: true } }),
+        },
       );
       await waitUntilReady();
       const output = lastFrame();
-      expect(output).toContain('[click here to show details]');
+      expect(output).toContain('Accepted');
       expect(output).not.toContain('new line');
       expect(output).toMatchSnapshot();
     });
 
     it('shows diff content by default when NOT in alternate buffer mode', async () => {
-      const { lastFrame, waitUntilReady } = renderWithProviders(
+      const { lastFrame, waitUntilReady } = await renderWithProviders(
         <DenseToolMessage
           {...defaultProps}
           resultDisplay={diffResult as ToolResultDisplay}
           status={CoreToolCallStatus.Success}
         />,
-        { useAlternateBuffer: false },
+        {
+          config: makeFakeConfig({ useAlternateBuffer: false }),
+          settings: createMockSettings({ ui: { useAlternateBuffer: false } }),
+        },
       );
       await waitUntilReady();
       const output = lastFrame();
-      expect(output).not.toContain('[click here to show details]');
+      expect(output).toContain('Accepted');
       expect(output).toContain('new line');
       expect(output).toMatchSnapshot();
     });
 
-    it('shows diff content after clicking [click here to show details]', async () => {
-      const { lastFrame, waitUntilReady } = renderWithProviders(
+    it('shows diff content after clicking summary', async () => {
+      const { lastFrame, waitUntilReady } = await renderWithProviders(
         <DenseToolMessage
           {...defaultProps}
           resultDisplay={diffResult as ToolResultDisplay}
           status={CoreToolCallStatus.Success}
         />,
-        { useAlternateBuffer: true, mouseEventsEnabled: true },
+        {
+          config: makeFakeConfig({ useAlternateBuffer: true }),
+          settings: createMockSettings({ ui: { useAlternateBuffer: true } }),
+          mouseEventsEnabled: true,
+        },
       );
       await waitUntilReady();
 
       // Verify it's hidden initially
       expect(lastFrame()).not.toContain('new line');
-
-      // Click [click here to show details]. We simulate a click.
-      // The toggle button is at the end of the summary line.
-      // Instead of precise coordinates, we can try to click everywhere or mock the click handler.
-      // But since we are using ink-testing-library, we can't easily "click" by text.
-      // However, we can verify that the state change works if we trigger the toggle.
-
-      // Actually, I can't easily simulate a click on a specific component by text in ink-testing-library
-      // without knowing exact coordinates.
-      // But I can verify that it RERENDERS with the diff if I can trigger it.
-
-      // For now, verifying the initial state and the non-alt-buffer state is already a good start.
     });
   });
 });

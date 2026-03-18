@@ -143,10 +143,7 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
   ): ToolResult {
     return {
       llmContent,
-      // Return an object with summary for dense output support
-      returnDisplay: {
-        summary: `Error: ${returnDisplay}`,
-      },
+      returnDisplay: `Error: ${returnDisplay}`,
       error: {
         message: llmContent,
         type,
@@ -171,9 +168,7 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
     if (validationError) {
       return {
         llmContent: validationError,
-        returnDisplay: {
-          summary: 'Path not in workspace.',
-        },
+        returnDisplay: 'Path not in workspace.',
         error: {
           message: validationError,
           type: ToolErrorType.PATH_NOT_IN_WORKSPACE,
@@ -205,9 +200,7 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
         // Changed error message to be more neutral for LLM
         return {
           llmContent: `Directory ${resolvedDirPath} is empty.`,
-          returnDisplay: {
-            summary: `Directory is empty.`,
-          },
+          returnDisplay: `Directory is empty.`,
         };
       }
 

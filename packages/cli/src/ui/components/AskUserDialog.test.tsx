@@ -288,7 +288,7 @@ describe('AskUserDialog', () => {
   });
 
   describe.each([
-    { useAlternateBuffer: true, expectedArrows: false },
+    { useAlternateBuffer: true, expectedArrows: true },
     { useAlternateBuffer: false, expectedArrows: true },
   ])(
     'Scroll Arrows (useAlternateBuffer: $useAlternateBuffer)',

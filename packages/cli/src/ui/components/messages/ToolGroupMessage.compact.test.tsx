@@ -60,7 +60,7 @@ describe('ToolGroupMessage Compact Rendering', () => {
       },
     ];
 
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <ToolGroupMessage {...defaultProps} toolCalls={toolCalls} />,
       { settings: compactSettings },
     );
@@ -95,7 +95,7 @@ describe('ToolGroupMessage Compact Rendering', () => {
       },
     ];
 
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <ToolGroupMessage {...defaultProps} toolCalls={toolCalls} />,
       { settings: compactSettings },
     );
@@ -129,7 +129,7 @@ describe('ToolGroupMessage Compact Rendering', () => {
       },
     ];
 
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <ToolGroupMessage {...defaultProps} toolCalls={toolCalls} />,
       { settings: compactSettings },
     );
@@ -163,7 +163,7 @@ describe('ToolGroupMessage Compact Rendering', () => {
       },
     ];
 
-    const { lastFrame, waitUntilReady } = renderWithProviders(
+    const { lastFrame, waitUntilReady } = await renderWithProviders(
       <ToolGroupMessage {...defaultProps} toolCalls={toolCalls} />,
       { settings: compactSettings },
     );

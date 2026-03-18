@@ -1206,6 +1206,11 @@ Logging in with Google... Restarting Gemini CLI to continue.
 
   setIsBackgroundShellListOpenRef.current = setIsBackgroundShellListOpen;
 
+  const pendingHistoryItems = useMemo(
+    () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
+    [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems],
+  );
+
   const lastOutputTimeRef = useRef(0);
 
   useEffect(() => {
@@ -1255,10 +1260,6 @@ Logging in with Google... Restarting Gemini CLI to continue.
 
   cancelHandlerRef.current = useCallback(
     (shouldRestorePrompt: boolean = true) => {
-      const pendingHistoryItems = [
-        ...pendingSlashCommandHistoryItems,
-        ...pendingGeminiHistoryItems,
-      ];
       if (isToolAwaitingConfirmation(pendingHistoryItems)) {
         return; // Don't clear - user may be composing a follow-up message
       }
@@ -1292,8 +1293,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       inputHistory,
       getQueuedMessagesText,
       clearQueue,
-      pendingSlashCommandHistoryItems,
-      pendingGeminiHistoryItems,
+      pendingHistoryItems,
     ],
   );
 
@@ -1329,10 +1329,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       const isIdle = streamingState === StreamingState.Idle;
       const isAgentRunning =
         streamingState === StreamingState.Responding ||
-        isToolExecuting([
-          ...pendingSlashCommandHistoryItems,
-          ...pendingGeminiHistoryItems,
-        ]);
+        isToolExecuting(pendingHistoryItems);
 
       if (isSlash && isAgentRunning) {
         const { commandToExecute } = parseSlashCommand(
@@ -1394,8 +1391,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       isMcpReady,
       streamingState,
       messageQueue.length,
-      pendingSlashCommandHistoryItems,
-      pendingGeminiHistoryItems,
+      pendingHistoryItems,
       config,
       constrainHeight,
       setConstrainHeight,
@@ -1715,11 +1711,6 @@ Logging in with Google... Restarting Gemini CLI to continue.
     errorVerbosity: settings.merged.ui.errorVerbosity,
   });
 
-  const pendingHistoryItems = useMemo(
-    () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
-    [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems],
-  );
-
   const handleGlobalKeypress = useCallback(
     (key: Key): boolean => {
       // Debug log keystrokes if enabled
@@ -1760,45 +1751,49 @@ Logging in with Google... Restarting Gemini CLI to continue.
         return true;
       }
 
+      const toggleLastTurnTools = () => {
+        // If the user manually collapses/expands the view, show the hint and reset the x-second timer.
+        triggerExpandHint(true);
+
+        // Find the boundary of the last user prompt
+        let lastUserPromptIndex = -1;
+        for (let i = historyManager.history.length - 1; i >= 0; i--) {
+          const type = historyManager.history[i].type;
+          if (type === 'user' || type === 'user_shell') {
+            lastUserPromptIndex = i;
+            break;
+          }
+        }
+
+        const targetToolCallIds: string[] = [];
+        // Collect IDs from history after last user prompt
+        historyManager.history.forEach((item, index) => {
+          if (index > lastUserPromptIndex && item.type === 'tool_group') {
+            item.tools.forEach((t) => {
+              if (t.callId) targetToolCallIds.push(t.callId);
+            });
+          }
+        });
+        // Collect IDs from pending items
+        pendingHistoryItems.forEach((item) => {
+          if (item.type === 'tool_group') {
+            item.tools.forEach((t) => {
+              if (t.callId) targetToolCallIds.push(t.callId);
+            });
+          }
+        });
+
+        if (targetToolCallIds.length > 0) {
+          toggleAllExpansion(targetToolCallIds);
+        }
+      };
+
       let enteringConstrainHeightMode = false;
       if (!constrainHeight) {
         enteringConstrainHeightMode = true;
         setConstrainHeight(true);
         if (keyMatchers[Command.SHOW_MORE_LINES](key)) {
-          // If the user manually collapses the view, show the hint and reset the x-second timer.
-          triggerExpandHint(true);
-
-          // Find the boundary of the last user prompt
-          let lastUserPromptIndex = -1;
-          for (let i = historyManager.history.length - 1; i >= 0; i--) {
-            const type = historyManager.history[i].type;
-            if (type === 'user' || type === 'user_shell') {
-              lastUserPromptIndex = i;
-              break;
-            }
-          }
-
-          const targetToolCallIds: string[] = [];
-          // Collect IDs from history after last user prompt
-          historyManager.history.forEach((item, index) => {
-            if (index > lastUserPromptIndex && item.type === 'tool_group') {
-              item.tools.forEach((t) => {
-                if (t.callId) targetToolCallIds.push(t.callId);
-              });
-            }
-          });
-          // Collect IDs from pending items
-          pendingHistoryItems.forEach((item) => {
-            if (item.type === 'tool_group') {
-              item.tools.forEach((t) => {
-                if (t.callId) targetToolCallIds.push(t.callId);
-              });
-            }
-          });
-
-          if (targetToolCallIds.length > 0) {
-            toggleAllExpansion(targetToolCallIds);
-          }
+          toggleLastTurnTools();
         }
         if (!isAlternateBuffer) {
           refreshStatic();
@@ -1846,40 +1841,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
         !enteringConstrainHeightMode
       ) {
         setConstrainHeight(false);
-        // If the user manually expands the view, show the hint and reset the x-second timer.
-        triggerExpandHint(true);
-
-        // Find the boundary of the last user prompt
-        let lastUserPromptIndex = -1;
-        for (let i = historyManager.history.length - 1; i >= 0; i--) {
-          const type = historyManager.history[i].type;
-          if (type === 'user' || type === 'user_shell') {
-            lastUserPromptIndex = i;
-            break;
-          }
-        }
-
-        const targetToolCallIds: string[] = [];
-        // Collect IDs from history after last user prompt
-        historyManager.history.forEach((item, index) => {
-          if (index > lastUserPromptIndex && item.type === 'tool_group') {
-            item.tools.forEach((t) => {
-              if (t.callId) targetToolCallIds.push(t.callId);
-            });
-          }
-        });
-        // Collect IDs from pending items
-        pendingHistoryItems.forEach((item) => {
-          if (item.type === 'tool_group') {
-            item.tools.forEach((t) => {
-              if (t.callId) targetToolCallIds.push(t.callId);
-            });
-          }
-        });
-
-        if (targetToolCallIds.length > 0) {
-          toggleAllExpansion(targetToolCallIds);
-        }
+        toggleLastTurnTools();
 
         // Force layout refresh after a short delay to allow the terminal layout to settle.
         // This prevents the "blank screen" issue by ensuring Ink re-measures after
@@ -2402,11 +2364,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       newAgents,
       showIsExpandableHint,
       hintMode:
-        config.isModelSteeringEnabled() &&
-        isToolExecuting([
-          ...pendingSlashCommandHistoryItems,
-          ...pendingGeminiHistoryItems,
-        ]),
+        config.isModelSteeringEnabled() && isToolExecuting(pendingHistoryItems),
       hintBuffer: '',
     }),
     [

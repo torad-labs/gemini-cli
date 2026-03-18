@@ -910,6 +910,7 @@ export interface ToolEditConfirmationDetails {
   originalContent: string | null;
   newContent: string;
   isModifying?: boolean;
+  diffStat?: DiffStat;
   ideConfirmation?: Promise<DiffUpdateResult>;
 }
 

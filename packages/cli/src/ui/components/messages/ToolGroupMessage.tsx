@@ -126,9 +126,10 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
   const isCompactModeEnabled = settings.merged.ui?.compactToolOutput === true;
 
   // Filter out tool calls that should be hidden (e.g. in-progress Ask User, or Plan Mode operations).
-  const toolCalls = useMemo(
+  const visibleToolCalls = useMemo(
     () =>
       allToolCalls.filter((t) => {
+        // Hide internal errors unless full verbosity
         if (
           isLowErrorVerbosity &&
           t.status === CoreToolCallStatus.Error &&
@@ -136,25 +137,42 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
         ) {
           return false;
         }
+        // Standard hiding logic (e.g. Plan Mode internal edits)
+        if (
+          shouldHideToolCall({
+            displayName: t.name,
+            status: t.status,
+            approvalMode: t.approvalMode,
+            hasResultDisplay: !!t.resultDisplay,
+            parentCallId: t.parentCallId,
+          })
+        ) {
+          return false;
+        }
 
-        return !shouldHideToolCall({
-          displayName: t.name,
-          status: t.status,
-          approvalMode: t.approvalMode,
-          hasResultDisplay: !!t.resultDisplay,
-          parentCallId: t.parentCallId,
-        });
+        // We HIDE tools that are still in pre-execution states (Confirming, Pending)
+        // from the History log. They live in the Global Queue or wait for their turn.
+        // Only show tools that are actually running or finished.
+        const displayStatus = mapCoreStatusToDisplayStatus(t.status);
+
+        // We hide Confirming tools from the history log because they are
+        // currently being rendered in the interactive ToolConfirmationQueue.
+        // We show everything else, including Pending (waiting to run) and
+        // Canceled (rejected by user), to ensure the history is complete
+        // and to avoid tools "vanishing" after approval.
+        return displayStatus !== ToolCallStatus.Confirming;
       }),
     [allToolCalls, isLowErrorVerbosity],
   );
 
-  const config = useConfig();
   const {
     activePtyId,
     embeddedShellFocused,
     backgroundShells,
     pendingHistoryItems,
   } = useUIState();
+
+  const config = useConfig();
 
   const { borderColor, borderDimColor } = useMemo(
     () =>
@@ -172,26 +190,6 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
       pendingHistoryItems,
       backgroundShells,
     ],
-  );
-
-  // We HIDE tools that are still in pre-execution states (Confirming, Pending)
-  // from the History log. They live in the Global Queue or wait for their turn.
-  // Only show tools that are actually running or finished.
-  // We explicitly exclude Pending and Confirming to ensure they only
-  // appear in the Global Queue until they are approved and start executing.
-  const visibleToolCalls = useMemo(
-    () =>
-      toolCalls.filter((t) => {
-        const displayStatus = mapCoreStatusToDisplayStatus(t.status);
-        // We hide Confirming tools from the history log because they are
-        // currently being rendered in the interactive ToolConfirmationQueue.
-        // We show everything else, including Pending (waiting to run) and
-        // Canceled (rejected by user), to ensure the history is complete
-        // and to avoid tools "vanishing" after approval.
-        return displayStatus !== ToolCallStatus.Confirming;
-      }),
-
-    [toolCalls],
   );
 
   const groupedTools = useMemo(() => {
@@ -218,11 +216,21 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     for (let i = 0; i < groupedTools.length; i++) {
       const group = groupedTools[i];
       const isFirst = i === 0;
+      const prevGroup = i > 0 ? groupedTools[i - 1] : null;
+      const prevIsCompact =
+        prevGroup &&
+        !Array.isArray(prevGroup) &&
+        isCompactTool(prevGroup, isCompactModeEnabled);
 
       if (Array.isArray(group)) {
         // Agent group
         height += 1; // Header
         height += group.length; // 1 line per agent
+        const isFirstProp = isFirst
+          ? (borderTopOverride ?? true)
+          : prevIsCompact;
+        if (isFirstProp) height += 1; // Top border
+
         // Spacing logic
         if (isFirst) {
           height += (borderTopOverride ?? true) ? 1 : 0;
@@ -230,14 +238,7 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
           height += 1; // marginTop
         }
       } else {
-        const tool = group;
-        const isCompact = isCompactTool(tool, isCompactModeEnabled);
-        const prevGroup = i > 0 ? groupedTools[i - 1] : null;
-        const prevIsCompact =
-          prevGroup &&
-          !Array.isArray(prevGroup) &&
-          isCompactTool(prevGroup, isCompactModeEnabled);
-
+        const isCompact = isCompactTool(group, isCompactModeEnabled);
         if (isCompact) {
           height += 1; // Base height for compact tool
           // Spacing logic (matching marginTop)
@@ -266,7 +267,10 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
         if (hasDensePayload(tool)) {
           countToolCallsWithResults++;
         }
-      } else if (tool.resultDisplay !== undefined && tool.resultDisplay !== '') {
+      } else if (
+        tool.resultDisplay !== undefined &&
+        tool.resultDisplay !== ''
+      ) {
         countToolCallsWithResults++;
       }
     }
@@ -341,11 +345,27 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
           !Array.isArray(nextGroup) &&
           isCompactTool(nextGroup, isCompactModeEnabled);
 
-        if (Array.isArray(group)) {
-          // Subagent group behaves like a standard tool for borders
-          const marginTop = isFirst ? (borderTopOverride ?? true ? 1 : 0) : 1;
-          const isFirstProp = !!(isFirst ? (borderTopOverride ?? true) : prevIsCompact);
+        const isAgentGroup = Array.isArray(group);
+        const isCompact =
+          !isAgentGroup && isCompactTool(group, isCompactModeEnabled);
 
+        let marginTop = 0;
+        if (isFirst) {
+          // marginTop = (borderTopOverride ?? true) ? 1 : 0;
+          marginTop = (borderTopOverride ?? false) ? 1 : 0;
+        } else if (isCompact && prevIsCompact) {
+          marginTop = 0;
+        } else {
+          marginTop = 1;
+        }
+
+        const isFirstProp = !!(isFirst
+          ? (borderTopOverride ?? true)
+          : prevIsCompact);
+
+        const showClosingBorder = !isCompact && (nextIsCompact || isLast);
+
+        if (isAgentGroup) {
           return (
             <Box
               key={group[0].callId}
@@ -362,7 +382,7 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
                 isFirst={isFirstProp}
                 isExpandable={isExpandable}
               />
-              {(nextIsCompact || isLast) && (
+              {showClosingBorder && (
                 <Box
                   height={0}
                   width={contentWidth}
@@ -380,41 +400,13 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
         }
 
         const tool = group;
-        const isCompact = isCompactTool(tool, isCompactModeEnabled);
         const isShellToolCall = isShellTool(tool.name);
-
-        let marginTop = 0;
-        if (isFirst) {
-          marginTop = (borderTopOverride ?? true) ? 1 : 0;
-        } else if (isCompact && prevIsCompact) {
-          marginTop = 0;
-        // } else if (!isCompact && prevIsCompact) {
-        //   marginTop = 1;
-        } else {
-          marginTop = 1;
-        }
-
-        let createTopBorder = true;
-        if (isCompact) {
-          createTopBorder = false;
-        }
-        // } else if (isFirst) {
-        //   createTopBorder = borderTopOverride ?? true;
-        // } else {
-        //   createTopBorder = !!prevIsCompact;
-        // }
-
         const commonProps = {
           ...tool,
           availableTerminalHeight: availableTerminalHeightPerToolMessage,
           terminalWidth: contentWidth,
           emphasis: 'medium' as const,
-          // isFirst: !!(isCompact
-          //   ? false
-          //   : isFirst
-          //     ? (borderTopOverride ?? true)
-          //     : prevIsCompact),
-          isFirst: createTopBorder,
+          isFirst: isCompact ? false : isFirstProp,
           borderColor,
           borderDimColor,
           isExpandable,
@@ -456,7 +448,7 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
                 </Box>
               )}
             </Box>
-            {!isCompact && (nextIsCompact || isLast) && (
+            {showClosingBorder && (
               <Box
                 height={0}
                 width={contentWidth}

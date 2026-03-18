@@ -150,8 +150,6 @@ export {
   SKILL_PARAM_NAME,
 };
 
-export const LS_TOOL_NAME_LEGACY = 'list_directory'; // Just to be safe if anything used the old exported name directly
-
 export const EDIT_TOOL_NAMES = new Set([EDIT_TOOL_NAME, WRITE_FILE_TOOL_NAME]);
 
 /**

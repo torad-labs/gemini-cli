@@ -162,9 +162,7 @@ describe('LSTool', () => {
       const result = await invocation.execute(abortSignal);
 
       expect(result.llmContent).toBe(`Directory ${emptyDir} is empty.`);
-      expect(result.returnDisplay).toEqual(
-        expect.objectContaining({ summary: 'Directory is empty.' }),
-      );
+      expect(result.returnDisplay).toBe('Directory is empty.');
     });
 
     it('should respect ignore patterns', async () => {
@@ -226,9 +224,7 @@ describe('LSTool', () => {
       const result = await invocation.execute(abortSignal);
 
       expect(result.llmContent).toContain('Path is not a directory');
-      expect(result.returnDisplay).toEqual(
-        expect.objectContaining({ summary: 'Error: Path is not a directory.' }),
-      );
+      expect(result.returnDisplay).toBe('Error: Path is not a directory.');
       expect(result.error?.type).toBe(ToolErrorType.PATH_IS_NOT_A_DIRECTORY);
     });
 
@@ -238,11 +234,7 @@ describe('LSTool', () => {
       const result = await invocation.execute(abortSignal);
 
       expect(result.llmContent).toContain('Error listing directory');
-      expect(result.returnDisplay).toEqual(
-        expect.objectContaining({
-          summary: 'Error: Failed to list directory.',
-        }),
-      );
+      expect(result.returnDisplay).toBe('Error: Failed to list directory.');
       expect(result.error?.type).toBe(ToolErrorType.LS_EXECUTION_ERROR);
     });
 
@@ -282,11 +274,7 @@ describe('LSTool', () => {
 
       expect(result.llmContent).toContain('Error listing directory');
       expect(result.llmContent).toContain('permission denied');
-      expect(result.returnDisplay).toEqual(
-        expect.objectContaining({
-          summary: 'Error: Failed to list directory.',
-        }),
-      );
+      expect(result.returnDisplay).toBe('Error: Failed to list directory.');
       expect(result.error?.type).toBe(ToolErrorType.LS_EXECUTION_ERROR);
     });
 

@@ -273,9 +273,7 @@ ${finalExclusionPatternsForDescription
       const errorMessage = `Error during file search: ${getErrorMessage(error)}`;
       return {
         llmContent: errorMessage,
-        returnDisplay: {
-          summary: `Error: ${getErrorMessage(error)}`,
-        },
+        returnDisplay: `Error: ${getErrorMessage(error)}`,
         error: {
           message: errorMessage,
           type: ToolErrorType.READ_MANY_FILES_SEARCH_ERROR,

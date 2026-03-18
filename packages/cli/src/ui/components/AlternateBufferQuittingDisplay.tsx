@@ -57,12 +57,9 @@ export const AlternateBufferQuittingDisplay = () => {
       ))}
       {showPromptedTool && (
         <Box flexDirection="column" marginTop={1} marginBottom={1}>
-          {/* JDW check this: new box wrapper added below with an add'l marginTop line */}
-          <Box marginTop={1}>
-            <Text color={theme.status.warning} bold>
-              Action Required (was prompted):
-            </Text>
-          </Box>
+          <Text color={theme.status.warning} bold>
+            Action Required (was prompted):
+          </Text>
           <Box marginTop={1}>
             <ToolStatusIndicator
               status={confirmingTool.tool.status}

@@ -5,7 +5,6 @@
  */
 
 import { renderWithProviders } from '../../../test-utils/render.js';
-import { act } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ToolGroupMessage } from './ToolGroupMessage.js';
 import type {
@@ -677,10 +676,15 @@ describe('<ToolGroupMessage />', () => {
         ];
         const item = createItem(toolCalls);
 
-        const { lastFrame, unmount, waitUntilReady } = await renderWithProviders(
-          <ToolGroupMessage {...baseProps} item={item} toolCalls={toolCalls} />,
-          { config: baseMockConfig, settings: fullVerbositySettings },
-        );
+        const { lastFrame, unmount, waitUntilReady } =
+          await renderWithProviders(
+            <ToolGroupMessage
+              {...baseProps}
+              item={item}
+              toolCalls={toolCalls}
+            />,
+            { config: baseMockConfig, settings: fullVerbositySettings },
+          );
         await waitUntilReady();
 
         if (shouldHide) {
@@ -1012,10 +1016,15 @@ describe('<ToolGroupMessage />', () => {
         ];
         const item = createItem(toolCalls);
 
-        const { lastFrame, unmount, waitUntilReady } = await renderWithProviders(
-          <ToolGroupMessage {...baseProps} item={item} toolCalls={toolCalls} />,
-          { config: baseMockConfig, settings: fullVerbositySettings },
-        );
+        const { lastFrame, unmount, waitUntilReady } =
+          await renderWithProviders(
+            <ToolGroupMessage
+              {...baseProps}
+              item={item}
+              toolCalls={toolCalls}
+            />,
+            { config: baseMockConfig, settings: fullVerbositySettings },
+          );
 
         await waitUntilReady();
 

@@ -42,8 +42,11 @@ interface DenseToolMessageProps extends IndividualToolCallDisplay {
 }
 
 interface ViewParts {
+  // brief description of action
   description?: React.ReactNode;
+  // result summary or status text
   summary?: React.ReactNode;
+  // detailed output, e.g. diff or command output
   payload?: React.ReactNode;
 }
 
@@ -91,6 +94,7 @@ function getFileOpData(
   resultDisplay: unknown,
   terminalWidth?: number,
   availableTerminalHeight?: number,
+  isClickable?: boolean,
 ): ViewParts {
   const added =
     (diff.diffStat?.model_added_lines ?? 0) +
@@ -121,30 +125,34 @@ function getFileOpData(
       </Text>
     </Box>
   );
-  let decision = '';
-  let decisionColor = theme.text.secondary;
+  let resultSummary = '';
+  let resultColor = theme.text.secondary;
 
   if (status === ToolCallStatus.Confirming) {
-    decision = 'Confirming';
+    resultSummary = 'Confirming';
   } else if (
     status === ToolCallStatus.Success ||
     status === ToolCallStatus.Executing
   ) {
-    decision = 'Accepted';
-    decisionColor = theme.text.accent;
+    resultSummary = 'Accepted';
+    resultColor = theme.text.accent;
   } else if (status === ToolCallStatus.Canceled) {
-    decision = 'Rejected';
-    decisionColor = theme.status.error;
+    resultSummary = 'Rejected';
+    resultColor = theme.status.error;
   } else if (status === ToolCallStatus.Error) {
-    decision = typeof resultDisplay === 'string' ? resultDisplay : 'Failed';
-    decisionColor = theme.status.error;
+    resultSummary =
+      typeof resultDisplay === 'string' ? resultDisplay : 'Failed';
+    resultColor = theme.status.error;
   }
 
   const summary = (
     <Box flexDirection="row">
-      {decision && (
-        <Text color={decisionColor} wrap="truncate-end">
-          → {decision.replace(/\n/g, ' ')}
+      {resultSummary && (
+        <Text color={resultColor} wrap="truncate-end">
+          →{' '}
+          <Text underline={isClickable}>
+            {resultSummary.replace(/\n/g, ' ')}
+          </Text>
         </Text>
       )}
       {showDiffStat && (
@@ -217,19 +225,19 @@ function getListDirectoryData(
   result: ListDirectoryResult,
   originalDescription?: string,
 ): ViewParts {
-  const summary = <Text color={theme.text.accent}>→ {result.summary}</Text>;
   const description = originalDescription ? (
     <Text color={theme.text.secondary} wrap="truncate-end">
       {originalDescription}
     </Text>
   ) : undefined;
-  // For directory listings, we want NO payload in dense mode as per request
+  const summary = <Text color={theme.text.accent}>→ {result.summary}</Text>;
+
+  // For directory listings, we want NO payload in dense mode
   return { description, summary, payload: undefined };
 }
 
 function getListResultData(
   result: ListDirectoryResult | ReadManyFilesResult,
-  _toolName: string,
   originalDescription?: string,
 ): ViewParts {
   // Use 'include' to determine if this is a ReadManyFilesResult
@@ -293,7 +301,7 @@ function getGenericSuccessData(
   } else {
     summary = (
       <Text color={theme.text.accent} wrap="wrap">
-        → Output received
+        → Returned (possible empty result)
       </Text>
     );
   }
@@ -381,10 +389,11 @@ export const DenseToolMessage: React.FC<DenseToolMessageProps> = (props) => {
         resultDisplay,
         terminalWidth,
         availableTerminalHeight,
+        isAlternateBuffer,
       );
     }
     if (isListResult(resultDisplay)) {
-      return getListResultData(resultDisplay, name, originalDescription);
+      return getListResultData(resultDisplay, originalDescription);
     }
 
     if (isGrepResult(resultDisplay)) {
@@ -430,10 +439,10 @@ export const DenseToolMessage: React.FC<DenseToolMessageProps> = (props) => {
     diff,
     mappedStatus,
     resultDisplay,
-    name,
     terminalWidth,
     availableTerminalHeight,
     originalDescription,
+    isAlternateBuffer,
   ]);
 
   const { description, summary } = viewParts;
@@ -519,15 +528,13 @@ export const DenseToolMessage: React.FC<DenseToolMessageProps> = (props) => {
           {description}
         </Box>
         {summary && (
-          <Box key="tool-summary" marginLeft={1} flexGrow={0}>
+          <Box
+            key="tool-summary"
+            ref={isAlternateBuffer && diff ? toggleRef : undefined}
+            marginLeft={1}
+            flexGrow={0}
+          >
             {summary}
-          </Box>
-        )}
-        {isAlternateBuffer && diff && (
-          <Box key="tool-toggle" ref={toggleRef} marginLeft={1} flexGrow={1}>
-            <Text color={theme.text.link} dimColor>
-              [click here to {isExpanded ? 'hide' : 'show'} details]
-            </Text>
           </Box>
         )}
       </Box>

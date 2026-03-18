@@ -16,7 +16,7 @@ import { vi } from 'vitest';
 import stripAnsi from 'strip-ansi';
 import type React from 'react';
 import { act, useState } from 'react';
-import type { LoadedSettings } from '../config/settings.js';
+import { LoadedSettings } from '../config/settings.js';
 import { KeypressProvider } from '../ui/contexts/KeypressContext.js';
 import { SettingsContext } from '../ui/contexts/SettingsContext.js';
 import { ShellFocusContext } from '../ui/contexts/ShellFocusContext.js';
@@ -42,7 +42,7 @@ import {
   type OverflowState,
 } from '../ui/contexts/OverflowContext.js';
 
-import { type Config, makeFakeConfig } from '@google/gemini-cli-core';
+import { type Config } from '@google/gemini-cli-core';
 import { FakePersistentState } from './persistentStateFake.js';
 import { AppContext, type AppState } from '../ui/contexts/AppContext.js';
 import { createMockSettings } from './settings.js';
@@ -52,8 +52,6 @@ import { DefaultLight } from '../ui/themes/builtin/light/default-light.js';
 import { pickDefaultThemeName } from '../ui/themes/theme.js';
 import { generateSvgForTerminal } from './svg.js';
 import { loadCliConfig, type CliArgs } from '../config/config.js';
-import os from 'node:os';
-import path from 'node:path';
 
 export const persistentStateMock = new FakePersistentState();
 
@@ -489,53 +487,6 @@ export const simulateClick = async (
   });
 };
 
-let mockConfigInternal: Config | undefined;
-
-const getMockConfigInternal = (): Config => {
-  if (!mockConfigInternal) {
-    mockConfigInternal = makeFakeConfig({
-      targetDir: os.tmpdir(),
-      enableEventDrivenScheduler: true,
-    });
-  }
-  return mockConfigInternal;
-};
-
-const configProxy = new Proxy({} as Config, {
-  get(_target, prop) {
-    if (prop === 'getTargetDir') {
-      return () =>
-        path.join(
-          path.parse(process.cwd()).root,
-          'Users',
-          'test',
-          'project',
-          'foo',
-          'bar',
-          'and',
-          'some',
-          'more',
-          'directories',
-          'to',
-          'make',
-          'it',
-          'long',
-        );
-    }
-    if (prop === 'getUseBackgroundColor') {
-      return () => true;
-    }
-    if (prop === 'getUseAlternateBuffer') {
-      return () => false;
-    }
-    const internal = getMockConfigInternal();
-    if (prop in internal) {
-      return internal[prop as keyof typeof internal];
-    }
-    throw new Error(`mockConfig does not have property ${String(prop)}`);
-  },
-});
-
 export const mockSettings = createMockSettings();
 
 // A minimal mock UIState to satisfy the context provider.
@@ -653,14 +604,14 @@ export const renderWithProviders = async (
     uiState: providedUiState,
     width,
     mouseEventsEnabled = false,
-    useAlternateBuffer = false,
-    config = configProxy as unknown as Config,
+    useAlternateBuffer: explicitUseAlternateBuffer,
+    config,
     uiActions,
     persistentState,
     appState = mockAppState,
   }: {
     shellFocus?: boolean;
-    settings?: LoadedSettings;
+    settings?: LoadedSettings | Partial<LoadedSettings['merged']>;
     uiState?: Partial<UIState>;
     width?: number;
     mouseEventsEnabled?: boolean;
@@ -711,14 +662,24 @@ export const renderWithProviders = async (
 
   const terminalWidth = width ?? baseState.terminalWidth;
 
-  if (config === (configProxy as unknown as Config)) {
-    // If it's the default proxy, we should probably still try to load a real config
-    // if we want to follow main's lead, OR just use the proxy.
-    // The feature branch seems to prefer the proxy for tests.
-    // However, main's async loadCliConfig might be necessary for some tests.
-    // Let's stick with the proxy if it was provided as default,
-    // but allow the caller to pass something else.
+  const finalSettings =
+    settings instanceof LoadedSettings
+      ? settings
+      : createMockSettings(settings || {});
+
+  if (!config) {
+    config = await loadCliConfig(
+      finalSettings.merged,
+      'random-session-id',
+      {} as CliArgs,
+      { cwd: '/' },
+    );
   }
+
+  const useAlternateBuffer =
+    explicitUseAlternateBuffer ??
+    finalSettings.merged.ui?.useAlternateBuffer ??
+    false;
 
   const finalConfig = new Proxy(config, {
     get(target, prop) {
@@ -758,7 +719,7 @@ export const renderWithProviders = async (
   const wrapWithProviders = (comp: React.ReactElement) => (
     <AppContext.Provider value={appState}>
       <ConfigContext.Provider value={finalConfig}>
-        <SettingsContext.Provider value={settings}>
+        <SettingsContext.Provider value={finalSettings}>
           <UIStateContext.Provider value={finalUiState}>
             <VimModeProvider>
               <ShellFocusContext.Provider value={shellFocus}>
@@ -826,16 +787,6 @@ export const renderWithProviders = async (
     simulateClick: (col: number, row: number, button?: 0 | 1 | 2) =>
       simulateClick(renderResult.stdin, col, row, button),
   };
-};
-
-export const cleanup = () => {
-  for (const instance of instances) {
-    act(() => {
-      instance.unmount();
-    });
-    instance.cleanup();
-  }
-  instances.length = 0;
 };
 
 export function renderHook<Result, Props>(
@@ -908,7 +859,7 @@ export async function renderHookWithProviders<Result, Props>(
     wrapper?: React.ComponentType<{ children: React.ReactNode }>;
     // Options for renderWithProviders
     shellFocus?: boolean;
-    settings?: LoadedSettings;
+    settings?: LoadedSettings | Partial<LoadedSettings['merged']>;
     uiState?: Partial<UIState>;
     width?: number;
     mouseEventsEnabled?: boolean;
