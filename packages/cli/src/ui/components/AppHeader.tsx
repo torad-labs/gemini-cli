@@ -70,6 +70,10 @@ export const AppHeader = ({ version, showDetails = true }: AppHeaderProps) => {
     }
   }
 
+  // If the terminal is too narrow to fit the icon and metadata (especially long nightly versions)
+  // side-by-side, we switch to column mode to prevent wrapping.
+  const isNarrow = terminalWidth > 0 && terminalWidth < 60;
+
   const renderLogo = () => (
     <Box flexDirection="row">
       <Box flexShrink={0}>
@@ -114,17 +118,19 @@ export const AppHeader = ({ version, showDetails = true }: AppHeaderProps) => {
     </Box>
   );
 
+  const useColumnLayout = !!logoTextArt || isNarrow;
+
   return (
     <Box flexDirection="column">
       {showHeader && (
         <Box
-          flexDirection={logoTextArt ? 'column' : 'row'}
+          flexDirection={useColumnLayout ? 'column' : 'row'}
           marginTop={1}
           marginBottom={1}
           paddingLeft={1}
         >
           {renderLogo()}
-          {logoTextArt ? (
+          {useColumnLayout ? (
             <Box marginTop={1}>{renderMetadata(true)}</Box>
           ) : (
             renderMetadata(false)
