@@ -19,11 +19,7 @@ import { CliSpinner } from './CliSpinner.js';
 
 import { isAppleTerminal } from '@google/gemini-cli-core';
 
-import {
-  longAsciiLogoCompactText,
-  shortAsciiLogoCompactText,
-  tinyAsciiLogoCompactText,
-} from './AsciiArt.js';
+import { longAsciiLogoCompactText } from './AsciiArt.js';
 import { getAsciiArtWidth } from '../utils/textUtils.js';
 
 interface AppHeaderProps {
@@ -68,14 +64,9 @@ export const AppHeader = ({ version, showDetails = true }: AppHeaderProps) => {
   let logoTextArt = '';
   if (loggedOut && terminalWidth > 0) {
     const widthOfLongLogo = getAsciiArtWidth(longAsciiLogoCompactText) + 20;
-    const widthOfShortLogo = getAsciiArtWidth(shortAsciiLogoCompactText) + 20;
 
     if (terminalWidth >= widthOfLongLogo) {
-      logoTextArt = longAsciiLogoCompactText.replace(/^\n/, '');
-    } else if (terminalWidth >= widthOfShortLogo) {
-      logoTextArt = shortAsciiLogoCompactText.replace(/^\n/, '');
-    } else {
-      logoTextArt = tinyAsciiLogoCompactText.replace(/^\n/, '');
+      logoTextArt = longAsciiLogoCompactText.trim();
     }
   }
 
@@ -85,7 +76,7 @@ export const AppHeader = ({ version, showDetails = true }: AppHeaderProps) => {
         <ThemedGradient>{ICON}</ThemedGradient>
       </Box>
       {logoTextArt && (
-        <Box marginLeft={4}>
+        <Box marginLeft={3}>
           <Text color={theme.text.primary}>{logoTextArt}</Text>
         </Box>
       )}
