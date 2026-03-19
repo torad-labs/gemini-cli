@@ -22,6 +22,7 @@ import { ApprovalMode } from '../policy/types.js';
 import { getResponseText } from '../utils/partUtils.js';
 import { fetchWithTimeout, isPrivateIp } from '../utils/fetch.js';
 import { convert } from 'html-to-text';
+import { truncateString } from '../utils/textUtils.js';
 import {
   logWebFetchFallbackAttempt,
   WebFetchFallbackAttemptEvent,
@@ -41,6 +42,8 @@ import type { AgentLoopContext } from '../config/agent-loop-context.js';
 const URL_FETCH_TIMEOUT_MS = 10000;
 
 const MAX_EXPERIMENTAL_FETCH_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_CONTENT_LENGTH = 100000;
+const TRUNCATION_WARNING = '\n\n... [Content truncated due to size limit] ...';
 const USER_AGENT =
   'Mozilla/5.0 (compatible; Google-Gemini-CLI/1.0; +https://github.com/google-gemini/gemini-cli)';
 
@@ -327,6 +330,10 @@ class WebFetchToolInvocation extends BaseToolInvocation<
     } else {
       // For other content types (text/plain, application/json, etc.), use raw text
       textContent = rawContent;
+    }
+
+    if (!this.context.config.isAutoDistillationEnabled()) {
+      return truncateString(textContent, MAX_CONTENT_LENGTH, TRUNCATION_WARNING);
     }
 
     return textContent;
@@ -634,7 +641,14 @@ ${aggregatedContent}
       );
 
       if (status >= 400) {
-        const rawResponseText = bodyBuffer.toString('utf8');
+        let rawResponseText = bodyBuffer.toString('utf8');
+        if (!this.context.config.isAutoDistillationEnabled()) {
+          rawResponseText = truncateString(
+            rawResponseText,
+            10000,
+            '\n\n... [Error response truncated] ...',
+          );
+        }
         const headers: Record<string, string> = {};
         response.headers.forEach((value, key) => {
           headers[key] = value;
@@ -657,7 +671,10 @@ Response: ${rawResponseText}`;
         lowContentType.includes('text/plain') ||
         lowContentType.includes('application/json')
       ) {
-        const text = bodyBuffer.toString('utf8');
+        let text = bodyBuffer.toString('utf8');
+        if (!this.context.config.isAutoDistillationEnabled()) {
+          text = truncateString(text, MAX_CONTENT_LENGTH, TRUNCATION_WARNING);
+        }
         return {
           llmContent: text,
           returnDisplay: `Fetched ${contentType} content from ${url}`,
@@ -666,12 +683,19 @@ Response: ${rawResponseText}`;
 
       if (lowContentType.includes('text/html')) {
         const html = bodyBuffer.toString('utf8');
-        const textContent = convert(html, {
+        let textContent = convert(html, {
           wordwrap: false,
           selectors: [
             { selector: 'a', options: { ignoreHref: false, baseUrl: url } },
           ],
         });
+        if (!this.context.config.isAutoDistillationEnabled()) {
+          textContent = truncateString(
+            textContent,
+            MAX_CONTENT_LENGTH,
+            TRUNCATION_WARNING,
+          );
+        }
         return {
           llmContent: textContent,
           returnDisplay: `Fetched and converted HTML content from ${url}`,
@@ -696,7 +720,10 @@ Response: ${rawResponseText}`;
       }
 
       // Fallback for unknown types - try as text
-      const text = bodyBuffer.toString('utf8');
+      let text = bodyBuffer.toString('utf8');
+      if (!this.context.config.isAutoDistillationEnabled()) {
+        text = truncateString(text, MAX_CONTENT_LENGTH, TRUNCATION_WARNING);
+      }
       return {
         llmContent: text,
         returnDisplay: `Fetched ${contentType || 'unknown'} content from ${url}`,

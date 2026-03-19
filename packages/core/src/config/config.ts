@@ -630,6 +630,7 @@ export interface ConfigParameters {
   disabledSkills?: string[];
   adminSkillsEnabled?: boolean;
   experimentalJitContext?: boolean;
+  autoDistillation?: boolean;
   topicUpdateNarration?: boolean;
   toolOutputMasking?: Partial<ToolOutputMaskingConfig>;
   disableLLMCorrection?: boolean;
@@ -855,6 +856,7 @@ export class Config implements McpContext, AgentLoopContext {
   private readonly adminSkillsEnabled: boolean;
 
   private readonly experimentalJitContext: boolean;
+  private readonly autoDistillation: boolean;
   private readonly topicUpdateNarration: boolean;
   private readonly disableLLMCorrection: boolean;
   private readonly planEnabled: boolean;
@@ -1016,6 +1018,7 @@ export class Config implements McpContext, AgentLoopContext {
     );
 
     this.experimentalJitContext = params.experimentalJitContext ?? true;
+    this.autoDistillation = params.autoDistillation ?? false;
     this.topicUpdateNarration = params.topicUpdateNarration ?? false;
     this.modelSteering = params.modelSteering ?? false;
     this.injectionService = new InjectionService(() =>
@@ -2164,6 +2167,10 @@ export class Config implements McpContext, AgentLoopContext {
 
   isJitContextEnabled(): boolean {
     return this.experimentalJitContext;
+  }
+
+  isAutoDistillationEnabled(): boolean {
+    return this.autoDistillation;
   }
 
   isTopicUpdateNarrationEnabled(): boolean {

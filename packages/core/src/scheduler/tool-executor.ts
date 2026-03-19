@@ -7,6 +7,8 @@
 import {
   ToolErrorType,
   runInDevTraceSpan,
+  ToolOutputTruncatedEvent,
+  logToolOutputTruncated,
   type ToolCallRequestInfo,
   type ToolCallResponseInfo,
   type ToolResult,
@@ -18,8 +20,11 @@ import { isAbortError } from '../utils/errors.js';
 import { SHELL_TOOL_NAME } from '../tools/tool-names.js';
 import { DiscoveredMCPTool } from '../tools/mcp-tool.js';
 import { ToolOutputDistillationService } from '../services/toolDistillationService.js';
-import { ShellToolInvocation } from '../tools/shell.js';
 import { executeToolWithHooks } from '../core/coreToolHookTriggers.js';
+import {
+  saveTruncatedToolOutput,
+  formatTruncatedToolOutput,
+} from '../utils/fileUtils.js';
 
 import { convertToFunctionResponse } from '../utils/generateContentResponseUtilities.js';
 import {
@@ -177,12 +182,97 @@ export class ToolExecutor {
     call: ToolCall,
     content: PartListUnion,
   ): Promise<{ truncatedContent: PartListUnion; outputFile?: string }> {
-    const distiller = new ToolOutputDistillationService(
-      this.config,
-      this.context.geminiClient,
-      this.context.promptId,
-    );
-    return distiller.distill(call.request.name, call.request.callId, content);
+    if (this.config.isAutoDistillationEnabled()) {
+      const distiller = new ToolOutputDistillationService(
+        this.config,
+        this.context.geminiClient,
+        this.context.promptId,
+      );
+      return distiller.distill(call.request.name, call.request.callId, content);
+    }
+
+    const toolName = call.request.name;
+    const callId = call.request.callId;
+    let outputFile: string | undefined;
+
+    if (typeof content === 'string' && toolName === SHELL_TOOL_NAME) {
+      const threshold = this.config.getTruncateToolOutputThreshold();
+
+      if (threshold > 0 && content.length > threshold) {
+        const originalContentLength = content.length;
+        const { outputFile: savedPath } = await saveTruncatedToolOutput(
+          content,
+          toolName,
+          callId,
+          this.config.storage.getProjectTempDir(),
+          this.context.promptId,
+        );
+        outputFile = savedPath;
+        const truncatedContent = formatTruncatedToolOutput(
+          content,
+          outputFile,
+          threshold,
+        );
+
+        logToolOutputTruncated(
+          this.config,
+          new ToolOutputTruncatedEvent(call.request.prompt_id, {
+            toolName,
+            originalContentLength,
+            truncatedContentLength: truncatedContent.length,
+            threshold,
+          }),
+        );
+
+        return { truncatedContent, outputFile };
+      }
+    } else if (
+      Array.isArray(content) &&
+      content.length === 1 &&
+      'tool' in call &&
+      call.tool instanceof DiscoveredMCPTool
+    ) {
+      const firstPart = content[0];
+      if (typeof firstPart === 'object' && typeof firstPart.text === 'string') {
+        const textContent = firstPart.text;
+        const threshold = this.config.getTruncateToolOutputThreshold();
+
+        if (threshold > 0 && textContent.length > threshold) {
+          const originalContentLength = textContent.length;
+          const { outputFile: savedPath } = await saveTruncatedToolOutput(
+            textContent,
+            toolName,
+            callId,
+            this.config.storage.getProjectTempDir(),
+            this.context.promptId,
+          );
+          outputFile = savedPath;
+          const truncatedText = formatTruncatedToolOutput(
+            textContent,
+            outputFile,
+            threshold,
+          );
+
+          const truncatedContent: Part[] = [
+            { ...firstPart, text: truncatedText },
+          ];
+
+          logToolOutputTruncated(
+            this.config,
+            new ToolOutputTruncatedEvent(call.request.prompt_id, {
+              toolName,
+              originalContentLength,
+              truncatedContentLength: truncatedText.length,
+              threshold,
+            }),
+          );
+
+          return { truncatedContent, outputFile };
+        }
+      }
+    }
+
+    return { truncatedContent: content, outputFile };
   }
 
   private async createCancelledResult(
