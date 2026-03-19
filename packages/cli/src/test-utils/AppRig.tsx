@@ -93,22 +93,9 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
   // Register the real execution logic so MockShellExecutionService can fall back to it
   MockService.setOriginalImplementation(original.ShellExecutionService.execute);
 
-  const mockIdeClient = {
-    getInstance: vi.fn().mockResolvedValue({
-      getCurrentIde: () => undefined,
-      addStatusChangeListener: vi.fn(),
-      removeStatusChangeListener: vi.fn(),
-      addTrustChangeListener: vi.fn(),
-      removeTrustChangeListener: vi.fn(),
-      getConnectionStatus: () => ({ status: 'disconnected' }),
-      disconnect: vi.fn().mockResolvedValue(undefined),
-    }),
-  };
-
   return {
     ...original,
     ShellExecutionService: MockService,
-    IdeClient: mockIdeClient,
   };
 });
 
@@ -403,11 +390,11 @@ export class AppRig {
     return isAnyToolActive || isAwaitingConfirmation;
   }
 
-  async render() {
+  render() {
     if (!this.config || !this.settings)
       throw new Error('AppRig not initialized');
 
-    await act(async () => {
+    act(() => {
       this.renderResult = renderWithProviders(
         <AppContainer
           config={this.config!}
@@ -426,12 +413,10 @@ export class AppRig {
           width: this.options.terminalWidth ?? 120,
           useAlternateBuffer: false,
           uiState: {
-            terminalHeight: this.options.terminalHeight ?? 80,
+            terminalHeight: this.options.terminalHeight ?? 40,
           },
         },
       );
-      // Allow async initializations (like banners) to settle within the act boundary
-      await new Promise((resolve) => setTimeout(resolve, 0));
     });
   }
 
@@ -725,7 +710,7 @@ export class AppRig {
   }
 
   async waitForIdle(timeout = 20000) {
-    await this.waitForOutput('Type your message or @path/to/file', timeout);
+    await this.waitForOutput('Type your message', timeout);
   }
 
   async sendMessage(text: string) {

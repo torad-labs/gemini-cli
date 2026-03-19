@@ -37,23 +37,23 @@ export const tinyAsciiLogo = `
 ░░░         ░░░░░░░░░  
 `;
 
-export const shortAsciiLogoCompact = `
- ▟▛▀▀█▖▜█▀▀▜▝██▙▗██▛▝█▛▝██▙ ▜█▘▜█▘
+export const shortAsciiLogoCompactText = `
+▟▛▀▀█▖▜█▀▀▜▝██▙▗██▛▝█▛▝██▙ ▜█▘▜█▘
 ▐█     ▐█▄▌  █▌▜█▘█▌ █▌ █▌▜▙▐█ ▐█ 
 ▝█▖ ▜█▘▐█ ▘▗ █▌   █▌ █▌ █▌ ▜██ ▐█ 
  ▝▀▀▀▀ ▀▀▀▀▀▝▀▀  ▝▀▀▝▀▀▝▀▀  ▀▀▘▀▀▘
 `;
 
-export const longAsciiLogoCompact = `
-▝▜▄    ▗█▀▀▜▙▝█▛▀▀▌▜██▖▟██▘▜█▘▜██▖▝█▛▝█▛
-  ▝▜▄  █▌     █▙▟  ▐█▝█▛▐█ ▐█ ▐█▝█▖█▌ █▌
- ▗▟▀   ▜▙ ▝█▛ █▌▝ ▖▐█   ▐█ ▐█ ▐█ ▝██▌ █▌
-▝▀      ▀▀▀▀▘▝▀▀▀▀▘▀▀▘  ▀▀▘▀▀▘▀▀▘ ▝▀▀▝▀▀
+export const longAsciiLogoCompactText = `
+▗█▀▀▜▙▝█▛▀▀▌▜██▖▟██▘▜█▘▜██▖▝█▛▝█▛
+█▌     █▙▟  ▐█▝█▛▐█ ▐█ ▐█▝█▖█▌ █▌
+▜▙ ▝█▛ █▌▝ ▖▐█   ▐█ ▐█ ▐█ ▝██▌ █▌
+ ▀▀▀▀▘▝▀▀▀▀▘▀▀▘  ▀▀▘▀▀▘▀▀▘ ▝▀▀▝▀▀
 `;
 
-export const tinyAsciiLogoCompact = `
-▝▜▄   ▟▛▀▀█▖
-  ▝▜▄▐█     
- ▗▟▀ ▝█▖ ▜█▘
-▝▀    ▝▀▀▀▀ 
+export const tinyAsciiLogoCompactText = `
+▟▛▀▀█▖
+▐█     
+▝█▖ ▜█▘
+ ▝▀▀▀▀ 
 `;

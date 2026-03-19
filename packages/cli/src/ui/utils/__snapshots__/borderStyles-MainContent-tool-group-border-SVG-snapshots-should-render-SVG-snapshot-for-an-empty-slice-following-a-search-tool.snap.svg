@@ -1,140 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="224" viewBox="0 0 920 224">
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="360" viewBox="0 0 920 360">
   <style>
     text { font-family: Consolas, "Courier New", monospace; font-size: 14px; dominant-baseline: text-before-edge; white-space: pre; }
   </style>
-  <rect width="920" height="224" fill="#000000" />
+  <rect width="920" height="360" fill="#000000" />
   <g transform="translate(10, 10)">
     <text x="9" y="19" fill="#4796e4" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="18" y="19" fill="#4a95e3" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="27" y="19" fill="#4d93e2" textLength="9" lengthAdjust="spacingAndGlyphs">▄</text>
-    <text x="72" y="19" fill="#5d8cdc" textLength="9" lengthAdjust="spacingAndGlyphs">▗</text>
-    <text x="81" y="19" fill="#618adb" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="90" y="19" fill="#6489da" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="99" y="19" fill="#6787d8" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="108" y="19" fill="#6a86d7" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="117" y="19" fill="#6e84d6" textLength="9" lengthAdjust="spacingAndGlyphs">▙</text>
-    <text x="126" y="19" fill="#7183d5" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="135" y="19" fill="#7481d4" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="144" y="19" fill="#7780d3" textLength="9" lengthAdjust="spacingAndGlyphs">▛</text>
-    <text x="153" y="19" fill="#7a7ed1" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="162" y="19" fill="#7e7dd0" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="171" y="19" fill="#817bcf" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
-    <text x="180" y="19" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="189" y="19" fill="#8779ca" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="198" y="19" fill="#8a78c6" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="207" y="19" fill="#8d77c2" textLength="9" lengthAdjust="spacingAndGlyphs">▖</text>
-    <text x="216" y="19" fill="#9176be" textLength="9" lengthAdjust="spacingAndGlyphs">▟</text>
-    <text x="225" y="19" fill="#9475ba" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="234" y="19" fill="#9774b6" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="243" y="19" fill="#9a73b2" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="252" y="19" fill="#9d72ae" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="261" y="19" fill="#a071aa" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="270" y="19" fill="#a471a7" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="279" y="19" fill="#a770a3" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="288" y="19" fill="#aa6f9f" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="297" y="19" fill="#ad6e9b" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="306" y="19" fill="#b06d97" textLength="9" lengthAdjust="spacingAndGlyphs">▖</text>
-    <text x="315" y="19" fill="#b36c93" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="324" y="19" fill="#b66b8f" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="333" y="19" fill="#ba6a8b" textLength="9" lengthAdjust="spacingAndGlyphs">▛</text>
-    <text x="342" y="19" fill="#bd6987" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="351" y="19" fill="#c06883" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="360" y="19" fill="#c3677f" textLength="9" lengthAdjust="spacingAndGlyphs">▛</text>
-    <text x="387" y="19" fill="#ffffff" textLength="90" lengthAdjust="spacingAndGlyphs" font-weight="bold">Gemini CLI</text>
-    <text x="477" y="19" fill="#afafaf" textLength="63" lengthAdjust="spacingAndGlyphs"> v1.2.3</text>
-    <text x="27" y="36" fill="#4d93e2" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="36" y="36" fill="#5192e1" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="45" y="36" fill="#5490df" textLength="9" lengthAdjust="spacingAndGlyphs">▄</text>
-    <text x="72" y="36" fill="#5d8cdc" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="81" y="36" fill="#618adb" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
-    <text x="135" y="36" fill="#7481d4" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="144" y="36" fill="#7780d3" textLength="9" lengthAdjust="spacingAndGlyphs">▙</text>
-    <text x="153" y="36" fill="#7a7ed1" textLength="9" lengthAdjust="spacingAndGlyphs">▟</text>
-    <text x="180" y="36" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="189" y="36" fill="#8779ca" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="198" y="36" fill="#8a78c6" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="207" y="36" fill="#8d77c2" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="216" y="36" fill="#9176be" textLength="9" lengthAdjust="spacingAndGlyphs">▛</text>
-    <text x="225" y="36" fill="#9475ba" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="234" y="36" fill="#9774b6" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="252" y="36" fill="#9d72ae" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="261" y="36" fill="#a071aa" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="279" y="36" fill="#a770a3" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="288" y="36" fill="#aa6f9f" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="297" y="36" fill="#ad6e9b" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="306" y="36" fill="#b06d97" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="315" y="36" fill="#b36c93" textLength="9" lengthAdjust="spacingAndGlyphs">▖</text>
-    <text x="324" y="36" fill="#b66b8f" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="333" y="36" fill="#ba6a8b" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
-    <text x="351" y="36" fill="#c06883" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="360" y="36" fill="#c3677f" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
-    <text x="18" y="53" fill="#4a95e3" textLength="9" lengthAdjust="spacingAndGlyphs">▗</text>
-    <text x="27" y="53" fill="#4d93e2" textLength="9" lengthAdjust="spacingAndGlyphs">▟</text>
-    <text x="36" y="53" fill="#5192e1" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="72" y="53" fill="#5d8cdc" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
-    <text x="81" y="53" fill="#618adb" textLength="9" lengthAdjust="spacingAndGlyphs">▙</text>
-    <text x="99" y="53" fill="#6787d8" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="108" y="53" fill="#6a86d7" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="117" y="53" fill="#6e84d6" textLength="9" lengthAdjust="spacingAndGlyphs">▛</text>
-    <text x="135" y="53" fill="#7481d4" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="144" y="53" fill="#7780d3" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
-    <text x="153" y="53" fill="#7a7ed1" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="171" y="53" fill="#817bcf" textLength="9" lengthAdjust="spacingAndGlyphs">▖</text>
-    <text x="180" y="53" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="189" y="53" fill="#8779ca" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="225" y="53" fill="#9475ba" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="234" y="53" fill="#9774b6" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="252" y="53" fill="#9d72ae" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="261" y="53" fill="#a071aa" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="279" y="53" fill="#a770a3" textLength="9" lengthAdjust="spacingAndGlyphs">▐</text>
-    <text x="288" y="53" fill="#aa6f9f" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="306" y="53" fill="#b06d97" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="315" y="53" fill="#b36c93" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="324" y="53" fill="#b66b8f" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="333" y="53" fill="#ba6a8b" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
-    <text x="351" y="53" fill="#c06883" textLength="9" lengthAdjust="spacingAndGlyphs">█</text>
-    <text x="360" y="53" fill="#c3677f" textLength="9" lengthAdjust="spacingAndGlyphs">▌</text>
+    <text x="18" y="19" fill="#6688d9" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
+    <text x="27" y="19" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▄</text>
+    <text x="99" y="19" fill="#ffffff" textLength="297" lengthAdjust="spacingAndGlyphs">▗█▀▀▜▙▝█▛▀▀▌▜██▖▟██▘▜█▘▜██▖▝█▛▝█▛</text>
+    <text x="27" y="36" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
+    <text x="36" y="36" fill="#a471a7" textLength="9" lengthAdjust="spacingAndGlyphs">▜</text>
+    <text x="45" y="36" fill="#c3677f" textLength="9" lengthAdjust="spacingAndGlyphs">▄</text>
+    <text x="99" y="36" fill="#ffffff" textLength="297" lengthAdjust="spacingAndGlyphs">█▌     █▙▟  ▐█▝█▛▐█ ▐█ ▐█▝█▖█▌ █▌</text>
+    <text x="18" y="53" fill="#6688d9" textLength="9" lengthAdjust="spacingAndGlyphs">▗</text>
+    <text x="27" y="53" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▟</text>
+    <text x="36" y="53" fill="#a471a7" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
+    <text x="99" y="53" fill="#ffffff" textLength="297" lengthAdjust="spacingAndGlyphs">▜▙ ▝█▛ █▌▝ ▖▐█   ▐█ ▐█ ▐█ ▝██▌ █▌</text>
     <text x="9" y="70" fill="#4796e4" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="18" y="70" fill="#4a95e3" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="81" y="70" fill="#618adb" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="90" y="70" fill="#6489da" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="99" y="70" fill="#6787d8" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="108" y="70" fill="#6a86d7" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="117" y="70" fill="#6e84d6" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="126" y="70" fill="#7183d5" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="135" y="70" fill="#7481d4" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="144" y="70" fill="#7780d3" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="153" y="70" fill="#7a7ed1" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="162" y="70" fill="#7e7dd0" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="171" y="70" fill="#817bcf" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="180" y="70" fill="#847ace" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="189" y="70" fill="#8779ca" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="198" y="70" fill="#8a78c6" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="225" y="70" fill="#9475ba" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="234" y="70" fill="#9774b6" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="243" y="70" fill="#9a73b2" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="252" y="70" fill="#9d72ae" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="261" y="70" fill="#a071aa" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="270" y="70" fill="#a471a7" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="279" y="70" fill="#a770a3" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="288" y="70" fill="#aa6f9f" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="297" y="70" fill="#ad6e9b" textLength="9" lengthAdjust="spacingAndGlyphs">▘</text>
-    <text x="315" y="70" fill="#b36c93" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="324" y="70" fill="#b66b8f" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="333" y="70" fill="#ba6a8b" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="342" y="70" fill="#bd6987" textLength="9" lengthAdjust="spacingAndGlyphs">▝</text>
-    <text x="351" y="70" fill="#c06883" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="360" y="70" fill="#c3677f" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
-    <text x="0" y="121" fill="#ffffaf" textLength="864" lengthAdjust="spacingAndGlyphs">╭──────────────────────────────────────────────────────────────────────────────────────────────╮</text>
-    <text x="0" y="138" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
-    <text x="18" y="138" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">⊶</text>
-    <text x="45" y="138" fill="#ffffff" textLength="153" lengthAdjust="spacingAndGlyphs" font-weight="bold">google_web_search</text>
-    <text x="855" y="138" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
-    <text x="0" y="155" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
-    <text x="855" y="155" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
-    <text x="0" y="172" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
-    <text x="18" y="172" fill="#ffffff" textLength="108" lengthAdjust="spacingAndGlyphs">Searching...</text>
-    <text x="855" y="172" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
-    <text x="0" y="189" fill="#ffffaf" textLength="864" lengthAdjust="spacingAndGlyphs">╰──────────────────────────────────────────────────────────────────────────────────────────────╯</text>
+    <text x="18" y="70" fill="#6688d9" textLength="9" lengthAdjust="spacingAndGlyphs">▀</text>
+    <text x="99" y="70" fill="#ffffff" textLength="297" lengthAdjust="spacingAndGlyphs"> ▀▀▀▀▘▝▀▀▀▀▘▀▀▘  ▀▀▘▀▀▘▀▀▘ ▝▀▀▝▀▀</text>
+    <text x="9" y="121" fill="#ffffff" textLength="90" lengthAdjust="spacingAndGlyphs" font-weight="bold">Gemini CLI</text>
+    <text x="99" y="121" fill="#afafaf" textLength="63" lengthAdjust="spacingAndGlyphs"> v1.2.3</text>
+    <text x="0" y="172" fill="#ffffff" textLength="225" lengthAdjust="spacingAndGlyphs">Tips for getting started:</text>
+    <text x="0" y="189" fill="#ffffff" textLength="90" lengthAdjust="spacingAndGlyphs">1. Create </text>
+    <text x="90" y="189" fill="#ffffff" textLength="81" lengthAdjust="spacingAndGlyphs" font-weight="bold">GEMINI.md</text>
+    <text x="171" y="189" fill="#ffffff" textLength="333" lengthAdjust="spacingAndGlyphs"> files to customize your interactions</text>
+    <text x="0" y="206" fill="#ffffff" textLength="27" lengthAdjust="spacingAndGlyphs">2. </text>
+    <text x="27" y="206" fill="#afafaf" textLength="45" lengthAdjust="spacingAndGlyphs">/help</text>
+    <text x="72" y="206" fill="#ffffff" textLength="189" lengthAdjust="spacingAndGlyphs"> for more information</text>
+    <text x="0" y="223" fill="#ffffff" textLength="450" lengthAdjust="spacingAndGlyphs">3. Ask coding questions, edit code or run commands</text>
+    <text x="0" y="240" fill="#ffffff" textLength="315" lengthAdjust="spacingAndGlyphs">4. Be specific for the best results</text>
+    <text x="0" y="257" fill="#ffffaf" textLength="864" lengthAdjust="spacingAndGlyphs">╭──────────────────────────────────────────────────────────────────────────────────────────────╮</text>
+    <text x="0" y="274" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
+    <text x="18" y="274" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">⊶</text>
+    <text x="45" y="274" fill="#ffffff" textLength="153" lengthAdjust="spacingAndGlyphs" font-weight="bold">google_web_search</text>
+    <text x="855" y="274" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
+    <text x="0" y="291" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
+    <text x="855" y="291" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
+    <text x="0" y="308" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
+    <text x="18" y="308" fill="#ffffff" textLength="108" lengthAdjust="spacingAndGlyphs">Searching...</text>
+    <text x="855" y="308" fill="#ffffaf" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
+    <text x="0" y="325" fill="#ffffaf" textLength="864" lengthAdjust="spacingAndGlyphs">╰──────────────────────────────────────────────────────────────────────────────────────────────╯</text>
   </g>
 </svg>
