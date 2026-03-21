@@ -309,7 +309,17 @@ export async function main() {
   // the sandbox because the sandbox will interfere with the Oauth2 web
   // redirect.
   let initialAuthFailed = false;
-  if (!settings.merged.security.auth.useExternal) {
+  if (partialConfig.hasNonGoogleProvider()) {
+    // Non-Google provider configured — skip Google auth entirely.
+    // Use USE_GEMINI as a dummy auth type; createContentGeneratorConfig
+    // will detect the provider config and return before hitting Google auth.
+    try {
+      await partialConfig.refreshAuth(AuthType.USE_GEMINI);
+    } catch (err) {
+      debugLogger.error('Error initializing provider:', err);
+      initialAuthFailed = true;
+    }
+  } else if (!settings.merged.security.auth.useExternal) {
     try {
       if (
         partialConfig.isInteractive() &&
@@ -658,13 +668,15 @@ export async function main() {
       ),
     );
 
-    const authType = await validateNonInteractiveAuth(
-      settings.merged.security.auth.selectedType,
-      settings.merged.security.auth.useExternal,
-      config,
-      settings,
-    );
-    await config.refreshAuth(authType);
+    if (!config.hasNonGoogleProvider()) {
+      const authType = await validateNonInteractiveAuth(
+        settings.merged.security.auth.selectedType,
+        settings.merged.security.auth.useExternal,
+        config,
+        settings,
+      );
+      await config.refreshAuth(authType);
+    }
 
     if (config.getDebugMode()) {
       debugLogger.log('Session ID: %s', sessionId);

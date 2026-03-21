@@ -2444,6 +2444,17 @@ export class Config implements McpContext, AgentLoopContext {
   }
 
   /**
+   * Returns true if a non-Google provider is configured (via settings or env vars),
+   * meaning Google auth can be skipped entirely.
+   */
+  hasNonGoogleProvider(): boolean {
+    const envType = process.env['PROVIDER_TYPE'];
+    const settingsType = this.providerConfig?.type;
+    const type = envType ?? settingsType;
+    return !!type && type !== 'google-genai';
+  }
+
+  /**
    * Updates the overage strategy at runtime.
    * Used to switch from 'ask' to 'always' after the user accepts credits
    * via the overage dialog, so subsequent API calls auto-include credits.
