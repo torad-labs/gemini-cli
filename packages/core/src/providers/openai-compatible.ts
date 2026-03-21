@@ -311,6 +311,28 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
   }
 
   // -------------------------------------------------------------------------
+  // Model listing
+  // -------------------------------------------------------------------------
+
+  /**
+   * List available models from the provider's /models endpoint.
+   * Returns model IDs sorted alphabetically.
+   */
+  async listModels(): Promise<string[]> {
+    try {
+      const response = await this.client.models.list();
+      const models: string[] = [];
+      for await (const model of response) {
+        models.push(model.id);
+      }
+      return models.sort();
+    } catch {
+      // If /models endpoint not available, return empty
+      return [];
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Retry logic
   // -------------------------------------------------------------------------
 

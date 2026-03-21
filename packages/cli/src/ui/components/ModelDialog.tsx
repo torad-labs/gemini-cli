@@ -44,15 +44,128 @@ function ProviderInfoDialog({ onClose }: ModelDialogProps): React.JSX.Element {
     'unknown';
   const providerType = providerConfig?.type ?? 'openai-compatible';
 
+  const [models, setModels] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [persistMode, setPersistMode] = useState(false);
+
+  useEffect(() => {
+    async function fetchModels() {
+      if (!config) {
+        setLoading(false);
+        return;
+      }
+      const list = await config.listProviderModels();
+      setModels(list);
+      setLoading(false);
+    }
+    void fetchModels();
+  }, [config]);
+
   useKeypress(
     (key) => {
       if (key.name === 'escape') {
         onClose();
         return true;
       }
+      if (key.name === 'tab') {
+        setPersistMode((prev) => !prev);
+        return true;
+      }
       return false;
     },
     { isActive: true },
+  );
+
+  const handleSelect = useCallback(
+    (model: string) => {
+      if (config) {
+        config.setModel(model, !persistMode);
+        const event = new ModelSlashCommandEvent(model);
+        logModelSlashCommand(config, event);
+      }
+      onClose();
+    },
+    [config, onClose, persistMode],
+  );
+
+  const options = useMemo(() => {
+    if (models.length === 0) return [];
+    // Filter to chat/instruct models, exclude embeddings/reward/guard models
+    const chatModels = models.filter((m) => {
+      const lower = m.toLowerCase();
+      return (
+        !lower.includes('embed') &&
+        !lower.includes('reward') &&
+        !lower.includes('guard') &&
+        !lower.includes('clip') &&
+        !lower.includes('parse') &&
+        !lower.includes('pii') &&
+        !lower.includes('streampetr') &&
+        !lower.includes('deplot') &&
+        !lower.includes('paligemma') &&
+        !lower.includes('vila')
+      );
+    });
+    return chatModels.map((m) => {
+      const owner = m.split('/')[0] ?? '';
+      return {
+        value: m,
+        title: m,
+        description: owner,
+        key: m,
+      };
+    });
+  }, [models]);
+
+  if (loading) {
+    return (
+      <Box
+        borderStyle="round"
+        borderColor={theme.border.default}
+        flexDirection="column"
+        padding={1}
+        width="100%"
+      >
+        <Text bold>Loading models from {providerType}...</Text>
+      </Box>
+    );
+  }
+
+  if (options.length === 0) {
+    return (
+      <Box
+        borderStyle="round"
+        borderColor={theme.border.default}
+        flexDirection="column"
+        padding={1}
+        width="100%"
+      >
+        <Text bold>
+          {providerType} — {currentModel}
+        </Text>
+        <Box marginTop={1}>
+          <Text color={theme.text.secondary}>
+            Could not fetch model list from provider. Current model:{' '}
+            {currentModel}
+          </Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text color={theme.text.secondary}>
+            {
+              '> Update provider.model in ~/.gemini/settings.json to change models.'
+            }
+          </Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text color={theme.text.secondary}>(Press Esc to close)</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  const initialIndex = Math.max(
+    0,
+    options.findIndex((o) => o.value === currentModel),
   );
 
   return (
@@ -63,33 +176,29 @@ function ProviderInfoDialog({ onClose }: ModelDialogProps): React.JSX.Element {
       padding={1}
       width="100%"
     >
-      <Text bold>Current Provider</Text>
+      <Text bold>
+        Select Model — {providerType} ({options.length} models)
+      </Text>
+      <Box marginTop={1}>
+        <DescriptiveRadioButtonSelect
+          items={options}
+          onSelect={handleSelect}
+          initialIndex={initialIndex}
+          showNumbers={true}
+        />
+      </Box>
       <Box marginTop={1} flexDirection="column">
-        <Text>
-          <Text color={theme.text.secondary}>Provider: </Text>
-          <Text color={theme.status.success}>{providerType}</Text>
-        </Text>
-        <Text>
-          <Text color={theme.text.secondary}>Model: </Text>
-          <Text color={theme.status.success}>{currentModel}</Text>
-        </Text>
-        <Text>
-          <Text color={theme.text.secondary}>Base URL: </Text>
+        <Box>
           <Text color={theme.text.primary}>
-            {config?.getContentGeneratorConfig()?.openaiConfig?.baseUrl ??
-              providerConfig?.baseUrl ??
-              'default'}
+            Remember model for future sessions:{' '}
           </Text>
-        </Text>
+          <Text color={theme.status.success}>
+            {persistMode ? 'true' : 'false'}
+          </Text>
+        </Box>
+        <Text color={theme.text.secondary}>(Press Tab to toggle)</Text>
       </Box>
-      <Box marginTop={1} flexDirection="column">
-        <Text color={theme.text.secondary}>
-          {
-            '> To change the model, update provider.model in ~/.gemini/settings.json'
-          }
-        </Text>
-      </Box>
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={1}>
         <Text color={theme.text.secondary}>(Press Esc to close)</Text>
       </Box>
     </Box>

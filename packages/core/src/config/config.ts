@@ -2444,6 +2444,15 @@ export class Config implements McpContext, AgentLoopContext {
   }
 
   /**
+   * List available models from the current provider.
+   * Returns empty array for Google providers (they use the built-in model list).
+   */
+  async listProviderModels(): Promise<string[]> {
+    if (!this.hasNonGoogleProvider()) return [];
+    return (await this.contentGenerator?.listModels?.()) ?? [];
+  }
+
+  /**
    * Returns true if a non-Google provider is configured (via settings or env vars),
    * meaning Google auth can be skipped entirely.
    */
