@@ -133,10 +133,40 @@ const PROVIDER_PRESETS: Record<
     apiKeyEnv: 'NVIDIA_API_KEY',
     defaultModel: 'nvidia/nemotron-3-super-120b-a12b',
   },
+  deepinfra: {
+    baseUrl: 'https://api.deepinfra.com/v1/openai',
+    apiKeyEnv: 'DEEPINFRA_API_KEY',
+    defaultModel: 'Qwen/Qwen3-235B-A22B',
+  },
   ollama: {
     baseUrl: 'http://localhost:11434/v1',
     apiKeyEnv: '',
     defaultModel: 'llama3.2:1b',
+  },
+  openai: {
+    baseUrl: 'https://api.openai.com/v1',
+    apiKeyEnv: 'OPENAI_API_KEY',
+    defaultModel: 'gpt-4o',
+  },
+  xai: {
+    baseUrl: 'https://api.x.ai/v1',
+    apiKeyEnv: 'XAI_API_KEY',
+    defaultModel: 'grok-3',
+  },
+  together: {
+    baseUrl: 'https://api.together.xyz/v1',
+    apiKeyEnv: 'TOGETHER_API_KEY',
+    defaultModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  },
+  fireworks: {
+    baseUrl: 'https://api.fireworks.ai/inference/v1',
+    apiKeyEnv: 'FIREWORKS_API_KEY',
+    defaultModel: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
+  },
+  groq: {
+    baseUrl: 'https://api.groq.com/openai/v1',
+    apiKeyEnv: 'GROQ_API_KEY',
+    defaultModel: 'llama-3.3-70b-versatile',
   },
 };
 

@@ -153,6 +153,10 @@ export class LoggingContentGenerator implements ContentGenerator {
     private readonly config: Config,
   ) {}
 
+  async listModels(): Promise<string[]> {
+    return (await this.wrapped.listModels?.()) ?? [];
+  }
+
   getWrapped(): ContentGenerator {
     return this.wrapped;
   }
