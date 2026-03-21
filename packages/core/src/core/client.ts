@@ -699,23 +699,33 @@ export class GeminiClient {
     // Determine Model (Stickiness vs. Routing)
     if (this.currentSequenceModel) {
       modelToUse = this.currentSequenceModel;
+    } else if (this.config.hasNonGoogleProvider()) {
+      // Non-Google providers use the model from provider config directly —
+      // skip Gemini model routing and availability checks.
+      modelToUse =
+        this.config.getContentGeneratorConfig()?.openaiConfig?.model ??
+        this.config.getModel();
     } else {
       const router = this.config.getModelRouterService();
       const decision = await router.route(routingContext);
       modelToUse = decision.model;
     }
 
-    // availability logic
     const modelConfigKey: ModelConfigKey = {
       model: modelToUse,
       isChatModel: true,
     };
-    const { model: finalModel } = applyModelSelection(
-      this.config,
-      modelConfigKey,
-      { consumeAttempt: false },
-    );
-    modelToUse = finalModel;
+
+    if (!this.config.hasNonGoogleProvider()) {
+      // availability logic (Google models only)
+      const { model: finalModel } = applyModelSelection(
+        this.config,
+        modelConfigKey,
+        { consumeAttempt: false },
+      );
+      modelToUse = finalModel;
+      modelConfigKey.model = finalModel;
+    }
 
     if (!signal.aborted && !this.currentSequenceModel) {
       yield { type: GeminiEventType.ModelInfo, value: modelToUse };
