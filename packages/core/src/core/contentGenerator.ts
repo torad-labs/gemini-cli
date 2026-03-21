@@ -26,6 +26,7 @@ import { determineSurface } from '../utils/surface.js';
 import { RecordingContentGenerator } from './recordingContentGenerator.js';
 import { getVersion, resolveModel } from '../../index.js';
 import type { LlmRole } from '../telemetry/llmRole.js';
+import { ProviderRegistry, type ProviderType } from '../providers/registry.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -97,6 +98,16 @@ export type ContentGeneratorConfig = {
   proxy?: string;
   baseUrl?: string;
   customHeaders?: Record<string, string>;
+  providerType?: ProviderType;
+  openaiConfig?: {
+    baseUrl: string;
+    model: string;
+    defaultHeaders?: Record<string, string>;
+    timeout?: number;
+    firstTokenTimeout?: number;
+    retryAttempts?: number;
+    retryBackoffMs?: number;
+  };
 };
 
 export async function createContentGeneratorConfig(
@@ -124,6 +135,22 @@ export async function createContentGeneratorConfig(
     baseUrl,
     customHeaders,
   };
+
+  // OpenAI-compatible provider detection via environment variables
+  const providerType = process.env['PROVIDER_TYPE'];
+  if (providerType === 'openai-compatible') {
+    const openaiBaseUrl = process.env['OPENAI_BASE_URL'];
+    const openaiModel = process.env['OPENAI_MODEL'];
+    if (openaiBaseUrl && openaiModel) {
+      contentGeneratorConfig.providerType = 'openai-compatible';
+      contentGeneratorConfig.apiKey = process.env['OPENAI_API_KEY'] ?? '';
+      contentGeneratorConfig.openaiConfig = {
+        baseUrl: openaiBaseUrl,
+        model: openaiModel,
+      };
+      return contentGeneratorConfig;
+    }
+  }
 
   // If we are using Google auth or we are in Cloud Shell, there is nothing else to validate for now
   if (
@@ -166,6 +193,25 @@ export async function createContentGenerator(
   sessionId?: string,
 ): Promise<ContentGenerator> {
   const generator = await (async () => {
+    // OpenAI-compatible provider routing
+    if (config.providerType === 'openai-compatible' && config.openaiConfig) {
+      const registry = new ProviderRegistry();
+      const provider = registry.create({
+        type: 'openai-compatible',
+        apiKey: config.apiKey ?? process.env['OPENAI_API_KEY'] ?? '',
+        baseUrl: config.openaiConfig.baseUrl,
+        model: config.openaiConfig.model,
+        defaultHeaders: config.openaiConfig.defaultHeaders,
+        timeout: config.openaiConfig.timeout,
+        firstTokenTimeout: config.openaiConfig.firstTokenTimeout,
+        retryAttempts: config.openaiConfig.retryAttempts,
+        retryBackoffMs: config.openaiConfig.retryBackoffMs,
+      });
+      if (provider) {
+        return new LoggingContentGenerator(provider, gcConfig);
+      }
+    }
+
     if (gcConfig.fakeResponses) {
       const fakeGenerator = await FakeContentGenerator.fromFile(
         gcConfig.fakeResponses,

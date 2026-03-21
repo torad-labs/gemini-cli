@@ -50,6 +50,7 @@ import {
 import { safeJsonStringify } from '../utils/safeJsonStringify.js';
 import { isMcpToolName } from '../tools/mcp-tool.js';
 import { estimateTokenCountSync } from '../utils/tokenCalculation.js';
+import { traceLlmCall, setTokenUsage } from '../telemetry/mlflow-tracer.js';
 
 interface StructuredError {
   status: number;
@@ -374,11 +375,19 @@ export class LoggingContentGenerator implements ContentGenerator {
         );
 
         try {
-          const response = await this.wrapped.generateContent(
-            req,
-            userPromptId,
-            role,
+          const response = await traceLlmCall(
+            req.model ?? 'unknown',
+            'genai',
+            () => this.wrapped.generateContent(req, userPromptId, role),
+            { baseUrl: serverDetails?.address },
           );
+          if (response.usageMetadata) {
+            setTokenUsage(
+              response.usageMetadata.promptTokenCount ?? 0,
+              response.usageMetadata.candidatesTokenCount ?? 0,
+              response.candidates?.[0]?.finishReason as string | undefined,
+            );
+          }
           spanMetadata.output = response.candidates?.[0]?.content ?? null;
           spanMetadata.attributes[GEN_AI_USAGE_INPUT_TOKENS] =
             response.usageMetadata?.promptTokenCount ?? 0;
@@ -474,10 +483,11 @@ export class LoggingContentGenerator implements ContentGenerator {
 
         let stream: AsyncGenerator<GenerateContentResponse>;
         try {
-          stream = await this.wrapped.generateContentStream(
-            req,
-            userPromptId,
-            role,
+          stream = await traceLlmCall(
+            req.model ?? 'unknown',
+            'genai',
+            () => this.wrapped.generateContentStream(req, userPromptId, role),
+            { baseUrl: serverDetails?.address },
           );
         } catch (error) {
           const durationMs = Date.now() - startTime;
