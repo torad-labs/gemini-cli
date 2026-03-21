@@ -1424,6 +1424,9 @@ export class Config implements McpContext, AgentLoopContext {
     ) {
       this.model = newContentGeneratorConfig.openaiConfig.model;
       this._activeModel = this.model;
+
+      // Fetch model metadata (context windows) from provider API — non-blocking
+      void this.contentGenerator.fetchModelMetadata?.();
     }
 
     // Initialize BaseLlmClient now that the ContentGenerator is available

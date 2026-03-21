@@ -157,6 +157,10 @@ export class LoggingContentGenerator implements ContentGenerator {
     return (await this.wrapped.listModels?.()) ?? [];
   }
 
+  async fetchModelMetadata(): Promise<void> {
+    await this.wrapped.fetchModelMetadata?.();
+  }
+
   getWrapped(): ContentGenerator {
     return this.wrapped;
   }

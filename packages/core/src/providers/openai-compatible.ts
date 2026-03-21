@@ -82,81 +82,16 @@ const modelContextCache = new Map<string, number>();
 
 const DEFAULT_CONTEXT_WINDOW = 131072; // 128K — conservative default
 
-/**
- * Well-known context windows for popular models (when API doesn't report them).
- * Keyed by model ID substring match.
- */
-const WELL_KNOWN_CONTEXT: Array<[pattern: string, tokens: number]> = [
-  // Meta Llama
-  ['llama-4', 1048576],
-  ['llama-3.3', 131072],
-  ['llama-3.1-405b', 131072],
-  ['llama-3.1-70b', 131072],
-  ['llama-3.1-8b', 131072],
-  ['llama-3.2', 131072],
-  ['llama3-70b', 8192],
-  ['llama3-8b', 8192],
-  ['llama2', 4096],
-  // Qwen
-  ['qwen3', 131072],
-  ['qwen2.5-coder', 131072],
-  ['qwen2.5', 131072],
-  ['qwq', 131072],
-  // DeepSeek
-  ['deepseek-v3', 163840],
-  ['deepseek-r1', 163840],
-  ['deepseek-coder', 16384],
-  // Mistral
-  ['mistral-large', 131072],
-  ['mistral-small', 131072],
-  ['mixtral-8x22b', 65536],
-  ['mixtral-8x7b', 32768],
-  ['mistral-7b', 32768],
-  ['codestral', 32768],
-  // NVIDIA
-  ['nemotron-3-super', 131072],
-  ['nemotron-4-340b', 4096],
-  ['nemotron-nano', 131072],
-  // Google (open models)
-  ['gemma-3', 131072],
-  ['gemma-2', 8192],
-  // Microsoft
-  ['phi-4', 16384],
-  ['phi-3.5', 131072],
-  ['phi-3-medium-128k', 131072],
-  ['phi-3-mini-128k', 131072],
-  ['phi-3', 4096],
-  // OpenAI
-  ['gpt-4o', 128000],
-  ['gpt-4-turbo', 128000],
-  ['gpt-4', 8192],
-  ['gpt-3.5-turbo', 16385],
-  // xAI
-  ['grok-3', 131072],
-  ['grok-2', 131072],
-  // Kimi
-  ['kimi-k2', 131072],
-];
+/** Whether the model list has been fetched at least once. */
+let modelsFetched = false;
 
 /**
- * Get context window for a model. Checks:
- * 1. Cache from /models API response
- * 2. Well-known defaults table
- * 3. Conservative fallback (128K)
+ * Get context window for a model.
+ * Returns cached value from API, or conservative 128K default if not yet fetched.
  */
 export function getModelContextWindow(model: string): number {
-  // Check API cache first
   const cached = modelContextCache.get(model);
   if (cached) return cached;
-
-  // Check well-known patterns
-  const lower = model.toLowerCase();
-  for (const [pattern, tokens] of WELL_KNOWN_CONTEXT) {
-    if (lower.includes(pattern)) {
-      return tokens;
-    }
-  }
-
   return DEFAULT_CONTEXT_WINDOW;
 }
 
@@ -496,16 +431,27 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
           }
         }
       }
+      modelsFetched = true;
       return models.sort();
     } catch {
       // If /models endpoint not available, return empty
+      modelsFetched = true;
       return [];
     }
   }
 
   /**
+   * Fetch model metadata (context windows) from the provider on startup.
+   * Non-blocking — caches results for tokenLimit() to use.
+   */
+  async fetchModelMetadata(): Promise<void> {
+    if (modelsFetched) return;
+    await this.listModels();
+  }
+
+  /**
    * Get the context window size for a model.
-   * Checks: cached API response → well-known defaults → fallback.
+   * Returns cached value from API fetch, or 128K default.
    */
   getModelContextWindow(model: string): number {
     return getModelContextWindow(model);
