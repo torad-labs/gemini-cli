@@ -1416,6 +1416,16 @@ export class Config implements McpContext, AgentLoopContext {
     // Only assign to instance properties after successful initialization
     this.contentGeneratorConfig = newContentGeneratorConfig;
 
+    // For non-Google providers, set the model to the provider's model
+    // so the rest of the system uses the correct model name
+    if (
+      this.hasNonGoogleProvider() &&
+      newContentGeneratorConfig.openaiConfig?.model
+    ) {
+      this.model = newContentGeneratorConfig.openaiConfig.model;
+      this._activeModel = this.model;
+    }
+
     // Initialize BaseLlmClient now that the ContentGenerator is available
     this.baseLlmClient = new BaseLlmClient(this.contentGenerator, this);
 

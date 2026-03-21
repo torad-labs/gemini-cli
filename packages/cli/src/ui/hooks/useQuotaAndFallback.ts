@@ -69,6 +69,11 @@ export function useQuotaAndFallback({
 
   // Set up Flash fallback handler
   useEffect(() => {
+    // Non-Google providers handle their own errors — skip Gemini fallback logic
+    if (config.hasNonGoogleProvider()) {
+      return;
+    }
+
     const fallbackHandler: FallbackModelHandler = async (
       failedModel,
       fallbackModel,
