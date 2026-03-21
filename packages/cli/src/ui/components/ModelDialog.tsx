@@ -35,7 +35,78 @@ interface ModelDialogProps {
   onClose: () => void;
 }
 
+function ProviderInfoDialog({ onClose }: ModelDialogProps): React.JSX.Element {
+  const config = useContext(ConfigContext);
+  const providerConfig = config?.getProviderConfig?.();
+  const currentModel =
+    config?.getContentGeneratorConfig()?.openaiConfig?.model ??
+    providerConfig?.model ??
+    'unknown';
+  const providerType = providerConfig?.type ?? 'openai-compatible';
+
+  useKeypress(
+    (key) => {
+      if (key.name === 'escape') {
+        onClose();
+        return true;
+      }
+      return false;
+    },
+    { isActive: true },
+  );
+
+  return (
+    <Box
+      borderStyle="round"
+      borderColor={theme.border.default}
+      flexDirection="column"
+      padding={1}
+      width="100%"
+    >
+      <Text bold>Current Provider</Text>
+      <Box marginTop={1} flexDirection="column">
+        <Text>
+          <Text color={theme.text.secondary}>Provider: </Text>
+          <Text color={theme.status.success}>{providerType}</Text>
+        </Text>
+        <Text>
+          <Text color={theme.text.secondary}>Model: </Text>
+          <Text color={theme.status.success}>{currentModel}</Text>
+        </Text>
+        <Text>
+          <Text color={theme.text.secondary}>Base URL: </Text>
+          <Text color={theme.text.primary}>
+            {config?.getContentGeneratorConfig()?.openaiConfig?.baseUrl ??
+              providerConfig?.baseUrl ??
+              'default'}
+          </Text>
+        </Text>
+      </Box>
+      <Box marginTop={1} flexDirection="column">
+        <Text color={theme.text.secondary}>
+          {
+            '> To change the model, update provider.model in ~/.gemini/settings.json'
+          }
+        </Text>
+      </Box>
+      <Box marginTop={1} flexDirection="column">
+        <Text color={theme.text.secondary}>(Press Esc to close)</Text>
+      </Box>
+    </Box>
+  );
+}
+
 export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
+  const config = useContext(ConfigContext);
+
+  if (config?.hasNonGoogleProvider()) {
+    return <ProviderInfoDialog onClose={onClose} />;
+  }
+
+  return <GeminiModelDialog onClose={onClose} />;
+}
+
+function GeminiModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
   const config = useContext(ConfigContext);
   const settings = useSettings();
   const [hasAccessToProModel, setHasAccessToProModel] = useState<boolean>(
@@ -372,7 +443,7 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
       </Box>
       <Box marginTop={1} flexDirection="column">
         <Text color={theme.text.secondary}>
-          {'> To use a specific Gemini model on startup, use the --model flag.'}
+          {'> To use a specific model on startup, use the --model flag.'}
         </Text>
       </Box>
       <Box marginTop={1} flexDirection="column">

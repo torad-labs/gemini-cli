@@ -381,7 +381,7 @@ export class Turn {
       ];
       await reportError(
         error,
-        'Error when talking to Gemini API',
+        'Error when talking to API',
         contextForReport,
         'Turn.run-sendMessageStream',
       );
