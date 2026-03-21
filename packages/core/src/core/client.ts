@@ -700,11 +700,19 @@ export class GeminiClient {
     if (this.currentSequenceModel) {
       modelToUse = this.currentSequenceModel;
     } else if (this.config.hasNonGoogleProvider()) {
-      // Non-Google providers use the model from provider config directly —
-      // skip Gemini model routing and availability checks.
-      modelToUse =
-        this.config.getContentGeneratorConfig()?.openaiConfig?.model ??
-        this.config.getModel();
+      // Non-Google providers skip Gemini model routing.
+      // Use getModel() which reflects user selection via /models dialog,
+      // but if it's a Gemini alias (from initial config), use the provider model.
+      const configModel = this.config.getModel();
+      const providerModel =
+        this.config.getContentGeneratorConfig()?.openaiConfig?.model;
+      // If configModel looks like a Gemini alias, use providerModel instead
+      const isGeminiAlias =
+        configModel.startsWith('gemini-') ||
+        configModel === 'auto' ||
+        configModel === 'pro' ||
+        configModel === 'flash';
+      modelToUse = isGeminiAlias && providerModel ? providerModel : configModel;
     } else {
       const router = this.config.getModelRouterService();
       const decision = await router.route(routingContext);
