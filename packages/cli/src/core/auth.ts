@@ -5,7 +5,7 @@
  */
 
 import {
-  type AuthType,
+  AuthType,
   type Config,
   getErrorMessage,
   ValidationRequiredError,
@@ -30,12 +30,12 @@ export async function performInitialAuth(
   config: Config,
   authType: AuthType | undefined,
 ): Promise<InitialAuthResult> {
-  if (!authType) {
+  if (!authType && !config.hasNonGoogleProvider()) {
     return { authError: null, accountSuspensionInfo: null };
   }
 
   try {
-    await config.refreshAuth(authType);
+    await config.refreshAuth(authType ?? AuthType.USE_GEMINI);
     // The console.log is intentionally left out here.
     // We can add a dedicated startup message later if needed.
   } catch (e) {

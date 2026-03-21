@@ -47,7 +47,8 @@ export async function initializeApp(
   const themeError = validateTheme(settings);
 
   const shouldOpenAuthDialog =
-    settings.merged.security.auth.selectedType === undefined || !!authError;
+    !config.hasNonGoogleProvider() &&
+    (settings.merged.security.auth.selectedType === undefined || !!authError);
 
   logCliConfiguration(
     config,
