@@ -11,6 +11,7 @@ import {
   PREVIEW_GEMINI_FLASH_MODEL,
   PREVIEW_GEMINI_MODEL,
 } from '../config/models.js';
+import { getModelContextWindow } from '../providers/openai-compatible.js';
 
 type Model = string;
 type TokenCount = number;
@@ -18,8 +19,7 @@ type TokenCount = number;
 export const DEFAULT_TOKEN_LIMIT = 1_048_576;
 
 export function tokenLimit(model: Model): TokenCount {
-  // Add other models as they become relevant or if specified by config
-  // Pulled from https://ai.google.dev/gemini-api/docs/models
+  // Gemini models — known 1M context
   switch (model) {
     case PREVIEW_GEMINI_MODEL:
     case PREVIEW_GEMINI_FLASH_MODEL:
@@ -28,6 +28,13 @@ export function tokenLimit(model: Model): TokenCount {
     case DEFAULT_GEMINI_FLASH_LITE_MODEL:
       return 1_048_576;
     default:
-      return DEFAULT_TOKEN_LIMIT;
+      break;
   }
+
+  // Non-Gemini models — check provider context window
+  if (!model.startsWith('gemini-')) {
+    return getModelContextWindow(model);
+  }
+
+  return DEFAULT_TOKEN_LIMIT;
 }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -72,6 +72,100 @@ import {
   openAIResponseToGeminiResponse,
   StreamingToolCallBuffer,
 } from './type-mappers.js';
+
+// ---------------------------------------------------------------------------
+// Model context window resolution
+// ---------------------------------------------------------------------------
+
+/** Cache of context windows fetched from provider /models endpoints. */
+const modelContextCache = new Map<string, number>();
+
+const DEFAULT_CONTEXT_WINDOW = 131072; // 128K — conservative default
+
+/**
+ * Well-known context windows for popular models (when API doesn't report them).
+ * Keyed by model ID substring match.
+ */
+const WELL_KNOWN_CONTEXT: Array<[pattern: string, tokens: number]> = [
+  // Meta Llama
+  ['llama-4', 1048576],
+  ['llama-3.3', 131072],
+  ['llama-3.1-405b', 131072],
+  ['llama-3.1-70b', 131072],
+  ['llama-3.1-8b', 131072],
+  ['llama-3.2', 131072],
+  ['llama3-70b', 8192],
+  ['llama3-8b', 8192],
+  ['llama2', 4096],
+  // Qwen
+  ['qwen3', 131072],
+  ['qwen2.5-coder', 131072],
+  ['qwen2.5', 131072],
+  ['qwq', 131072],
+  // DeepSeek
+  ['deepseek-v3', 163840],
+  ['deepseek-r1', 163840],
+  ['deepseek-coder', 16384],
+  // Mistral
+  ['mistral-large', 131072],
+  ['mistral-small', 131072],
+  ['mixtral-8x22b', 65536],
+  ['mixtral-8x7b', 32768],
+  ['mistral-7b', 32768],
+  ['codestral', 32768],
+  // NVIDIA
+  ['nemotron-3-super', 131072],
+  ['nemotron-4-340b', 4096],
+  ['nemotron-nano', 131072],
+  // Google (open models)
+  ['gemma-3', 131072],
+  ['gemma-2', 8192],
+  // Microsoft
+  ['phi-4', 16384],
+  ['phi-3.5', 131072],
+  ['phi-3-medium-128k', 131072],
+  ['phi-3-mini-128k', 131072],
+  ['phi-3', 4096],
+  // OpenAI
+  ['gpt-4o', 128000],
+  ['gpt-4-turbo', 128000],
+  ['gpt-4', 8192],
+  ['gpt-3.5-turbo', 16385],
+  // xAI
+  ['grok-3', 131072],
+  ['grok-2', 131072],
+  // Kimi
+  ['kimi-k2', 131072],
+];
+
+/**
+ * Get context window for a model. Checks:
+ * 1. Cache from /models API response
+ * 2. Well-known defaults table
+ * 3. Conservative fallback (128K)
+ */
+export function getModelContextWindow(model: string): number {
+  // Check API cache first
+  const cached = modelContextCache.get(model);
+  if (cached) return cached;
+
+  // Check well-known patterns
+  const lower = model.toLowerCase();
+  for (const [pattern, tokens] of WELL_KNOWN_CONTEXT) {
+    if (lower.includes(pattern)) {
+      return tokens;
+    }
+  }
+
+  return DEFAULT_CONTEXT_WINDOW;
+}
+
+/**
+ * Set a model's context window in the cache (e.g. from settings or API).
+ */
+export function setModelContextWindow(model: string, tokens: number): void {
+  modelContextCache.set(model, tokens);
+}
 
 export interface OpenAIProviderConfig {
   apiKey: string;
@@ -167,6 +261,7 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
 
     const callWithRetry = this.callWithRetry.bind(this);
     const client = this.client;
+    const firstTokenTimeout = this.config.firstTokenTimeout;
 
     async function* streamGenerator(): AsyncGenerator<GenerateContentResponse> {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- OpenAI streaming returns AsyncIterable
@@ -176,10 +271,35 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
 
       const toolBuffer = new StreamingToolCallBuffer();
       let hasYielded = false;
+      let firstTokenReceived = false;
+
+      // Set up first token timeout warning
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      if (firstTokenTimeout) {
+        timeoutId = setTimeout(() => {
+          if (!firstTokenReceived) {
+            debugLogger.warn(
+              `[OpenAI Provider] First token timeout (${firstTokenTimeout}ms) exceeded for model ${completionParams.model}`,
+            );
+          }
+        }, firstTokenTimeout);
+      }
 
       try {
         for await (const chunk of stream) {
           const choice = chunk.choices?.[0];
+
+          // Clear timeout on first meaningful token
+          if (
+            !firstTokenReceived &&
+            (choice?.delta?.content || choice?.delta?.tool_calls)
+          ) {
+            firstTokenReceived = true;
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = undefined;
+            }
+          }
 
           // Accumulate tool call deltas
           if (choice?.delta?.tool_calls) {
@@ -248,6 +368,11 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
         };
         errResponse.candidates = [errCandidate];
         yield errResponse;
+      } finally {
+        // Clean up timeout if still pending
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
     }
 
@@ -258,18 +383,53 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
     request: CountTokensParameters,
   ): Promise<CountTokensResponse> {
     // OpenAI-compatible APIs typically don't have a dedicated token counting
-    // endpoint. Estimate based on character count / 4.
-    let charCount = 0;
+    // endpoint. Estimate using content-aware heuristics.
+    let totalTokens = 0;
     for (const content of extractContents(request.contents)) {
       for (const part of content.parts ?? []) {
-        if (part.text) charCount += part.text.length;
+        if (part.text) {
+          totalTokens += this.estimateTokenCount(part.text);
+        }
       }
     }
-    const estimatedTokens = Math.ceil(charCount / 4);
 
     const tokenResponse = new CountTokensResponse();
-    tokenResponse.totalTokens = estimatedTokens;
+    tokenResponse.totalTokens = totalTokens;
     return tokenResponse;
+  }
+
+  /**
+   * Estimate token count for text content.
+   *
+   * Uses heuristics based on content type:
+   * - Plain ASCII text: ~4 characters per token
+   * - Code (brackets, operators): ~3 characters per token
+   * - Non-ASCII (Unicode, CJK): ~2.5 characters per token
+   *
+   * For accurate counts, providers should implement native token counting.
+   */
+  private estimateTokenCount(text: string): number {
+    if (!text) return 0;
+
+    // Check for non-ASCII characters (Unicode, CJK, etc.)
+    // Using Unicode property escapes to avoid control character regex issues
+    const nonAsciiCount = (text.match(/\P{ASCII}/gu) ?? []).length;
+    const isMostlyNonAscii = nonAsciiCount > text.length * 0.3;
+
+    // Check for code-like patterns (brackets, operators)
+    const codePatternCount = (text.match(/[{}[\]();=<>]/g) ?? []).length;
+    const isCodeLike = codePatternCount > text.length * 0.05;
+
+    let divisor: number;
+    if (isMostlyNonAscii) {
+      divisor = 2.5; // Non-ASCII uses more tokens per character
+    } else if (isCodeLike) {
+      divisor = 3; // Code uses more tokens per character
+    } else {
+      divisor = 4; // Plain text estimate
+    }
+
+    return Math.ceil(text.length / divisor);
   }
 
   async embedContent(
@@ -324,12 +484,31 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
       const models: string[] = [];
       for await (const model of response) {
         models.push(model.id);
+        // Cache context length from metadata if available
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- accessing provider-specific metadata field
+        const meta = (model as unknown as Record<string, unknown>)['metadata'];
+        if (meta && typeof meta === 'object') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- runtime-checked object
+          const metaRecord = meta as Record<string, unknown>;
+          const ctxLen = metaRecord['context_length'];
+          if (typeof ctxLen === 'number') {
+            modelContextCache.set(model.id, ctxLen);
+          }
+        }
       }
       return models.sort();
     } catch {
       // If /models endpoint not available, return empty
       return [];
     }
+  }
+
+  /**
+   * Get the context window size for a model.
+   * Checks: cached API response → well-known defaults → fallback.
+   */
+  getModelContextWindow(model: string): number {
+    return getModelContextWindow(model);
   }
 
   // -------------------------------------------------------------------------
@@ -339,11 +518,13 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
   private async callWithRetry<T>(fn: () => Promise<T>): Promise<T> {
     const maxAttempts = this.config.retryAttempts ?? 3;
     const baseBackoff = this.config.retryBackoffMs ?? 1000;
+    let lastError: Error | undefined;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         return await fn();
       } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
         const status = getErrorStatus(error);
 
         // Don't retry auth errors
@@ -366,6 +547,13 @@ export class OpenAICompatibleContentGenerator implements ContentGenerator {
     }
 
     // Should not reach here, but TypeScript needs it
-    throw new Error("I'm temporarily unavailable. Try again in a minute.");
+    const provider = this.config.baseUrl;
+    const model = this.config.model;
+    const lastErrorStr = lastError?.message ?? 'Unknown error';
+    throw new Error(
+      `${provider} (${model}): ${lastErrorStr}. ` +
+        `All ${maxAttempts} retry attempts exhausted. ` +
+        `Try again in a minute or check your configuration.`,
+    );
   }
 }
