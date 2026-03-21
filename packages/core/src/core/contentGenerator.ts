@@ -110,6 +110,93 @@ export type ContentGeneratorConfig = {
   };
 };
 
+// ---------------------------------------------------------------------------
+// Provider presets and resolution
+// ---------------------------------------------------------------------------
+
+interface ResolvedProvider {
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+  timeout?: number;
+  retryAttempts?: number;
+}
+
+const PROVIDER_PRESETS: Record<
+  string,
+  { baseUrl: string; apiKeyEnv: string; defaultModel?: string }
+> = {
+  'nvidia-nim': {
+    baseUrl: 'https://integrate.api.nvidia.com/v1',
+    apiKeyEnv: 'NVIDIA_API_KEY',
+    defaultModel: 'nvidia/nemotron-3-super-120b-a12b',
+  },
+  ollama: {
+    baseUrl: 'http://localhost:11434/v1',
+    apiKeyEnv: '',
+    defaultModel: 'llama3.2:1b',
+  },
+};
+
+/**
+ * Resolve an API key value — supports `$ENV_VAR` syntax.
+ */
+function resolveApiKey(value: string | undefined): string {
+  if (!value) return '';
+  if (value.startsWith('$')) {
+    return process.env[value.slice(1)] ?? '';
+  }
+  return value;
+}
+
+/**
+ * Resolve provider config from settings + env vars.
+ * Env vars always override settings. Returns undefined for google-genai.
+ */
+function resolveProviderConfig(settings?: {
+  type?: string;
+  model?: string;
+  baseUrl?: string;
+  apiKey?: string;
+  timeout?: number;
+  retryAttempts?: number;
+}): ResolvedProvider | undefined {
+  // Env vars take precedence over everything
+  const envType = process.env['PROVIDER_TYPE'];
+  const envBaseUrl = process.env['OPENAI_BASE_URL'];
+  const envModel = process.env['OPENAI_MODEL'];
+  const envApiKey = process.env['OPENAI_API_KEY'];
+
+  const providerType = envType ?? settings?.type;
+
+  // No provider configured or explicitly google-genai
+  if (!providerType || providerType === 'google-genai') {
+    return undefined;
+  }
+
+  // Check for preset
+  const preset = PROVIDER_PRESETS[providerType];
+
+  const baseUrl = envBaseUrl ?? settings?.baseUrl ?? preset?.baseUrl;
+  const model = envModel ?? settings?.model ?? preset?.defaultModel;
+  const apiKey =
+    envApiKey ??
+    resolveApiKey(settings?.apiKey) ??
+    (preset?.apiKeyEnv ? (process.env[preset.apiKeyEnv] ?? '') : '');
+
+  if (!baseUrl || !model) {
+    return undefined;
+  }
+
+  return {
+    baseUrl,
+    model,
+    apiKey,
+    timeout: settings?.timeout,
+    retryAttempts: settings?.retryAttempts,
+  };
+}
+
 export async function createContentGeneratorConfig(
   config: Config,
   authType: AuthType | undefined,
@@ -136,20 +223,19 @@ export async function createContentGeneratorConfig(
     customHeaders,
   };
 
-  // OpenAI-compatible provider detection via environment variables
-  const providerType = process.env['PROVIDER_TYPE'];
-  if (providerType === 'openai-compatible') {
-    const openaiBaseUrl = process.env['OPENAI_BASE_URL'];
-    const openaiModel = process.env['OPENAI_MODEL'];
-    if (openaiBaseUrl && openaiModel) {
-      contentGeneratorConfig.providerType = 'openai-compatible';
-      contentGeneratorConfig.apiKey = process.env['OPENAI_API_KEY'] ?? '';
-      contentGeneratorConfig.openaiConfig = {
-        baseUrl: openaiBaseUrl,
-        model: openaiModel,
-      };
-      return contentGeneratorConfig;
-    }
+  // Provider detection: env vars override settings, settings override defaults
+  const providerSettings = config.getProviderConfig?.();
+  const resolvedProvider = resolveProviderConfig(providerSettings);
+  if (resolvedProvider) {
+    contentGeneratorConfig.providerType = 'openai-compatible';
+    contentGeneratorConfig.apiKey = resolvedProvider.apiKey;
+    contentGeneratorConfig.openaiConfig = {
+      baseUrl: resolvedProvider.baseUrl,
+      model: resolvedProvider.model,
+      timeout: resolvedProvider.timeout,
+      retryAttempts: resolvedProvider.retryAttempts,
+    };
+    return contentGeneratorConfig;
   }
 
   // If we are using Google auth or we are in Cloud Shell, there is nothing else to validate for now

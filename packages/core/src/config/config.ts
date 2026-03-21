@@ -665,6 +665,14 @@ export interface ConfigParameters {
   billing?: {
     overageStrategy?: OverageStrategy;
   };
+  providerConfig?: {
+    type?: string;
+    model?: string;
+    baseUrl?: string;
+    apiKey?: string;
+    timeout?: number;
+    retryAttempts?: number;
+  };
 }
 
 export class Config implements McpContext, AgentLoopContext {
@@ -859,6 +867,15 @@ export class Config implements McpContext, AgentLoopContext {
 
   private readonly billing: {
     overageStrategy: OverageStrategy;
+  };
+
+  private readonly providerConfig?: {
+    type?: string;
+    model?: string;
+    baseUrl?: string;
+    apiKey?: string;
+    timeout?: number;
+    retryAttempts?: number;
   };
 
   private readonly enableAgents: boolean;
@@ -1201,6 +1218,8 @@ export class Config implements McpContext, AgentLoopContext {
     this.billing = {
       overageStrategy: params.billing?.overageStrategy ?? 'ask',
     };
+
+    this.providerConfig = params.providerConfig;
 
     if (params.contextFileName) {
       setGeminiMdFilename(params.contextFileName);
@@ -2418,6 +2437,10 @@ export class Config implements McpContext, AgentLoopContext {
 
   getBillingSettings(): { overageStrategy: OverageStrategy } {
     return this.billing;
+  }
+
+  getProviderConfig(): ConfigParameters['providerConfig'] {
+    return this.providerConfig;
   }
 
   /**

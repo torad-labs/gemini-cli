@@ -910,6 +910,96 @@ const SETTINGS_SCHEMA = {
     },
   },
 
+  provider: {
+    type: 'object',
+    label: 'Provider',
+    category: 'Model',
+    requiresRestart: true,
+    default: {},
+    description: oneLine`
+      Configure the LLM provider. Supports Google Gemini (default),
+      OpenAI-compatible APIs (NVIDIA NIM, Grok, Ollama, OpenAI), and
+      preset shortcuts (nvidia-nim, ollama).
+    `,
+    showInDialog: false,
+    properties: {
+      type: {
+        type: 'enum',
+        label: 'Provider Type',
+        category: 'Model',
+        requiresRestart: true,
+        default: undefined as string | undefined,
+        description: oneLine`
+          The provider type. Use 'openai-compatible' for any OpenAI-compatible API,
+          or a preset like 'nvidia-nim' or 'ollama' which auto-fills baseUrl.
+          Leave unset for default Google Gemini.
+        `,
+        showInDialog: true,
+        options: [
+          { value: 'google-genai', label: 'Google Gemini (default)' },
+          { value: 'openai-compatible', label: 'OpenAI-compatible API' },
+          { value: 'nvidia-nim', label: 'NVIDIA NIM' },
+          { value: 'ollama', label: 'Ollama (local)' },
+        ] as const,
+      },
+      model: {
+        type: 'string',
+        label: 'Provider Model',
+        category: 'Model',
+        requiresRestart: true,
+        default: undefined as string | undefined,
+        description: oneLine`
+          The model name to use with this provider
+          (e.g. "nvidia/nemotron-3-super-120b-a12b", "llama3.2:1b", "gpt-4o").
+        `,
+        showInDialog: true,
+      },
+      baseUrl: {
+        type: 'string',
+        label: 'Base URL',
+        category: 'Model',
+        requiresRestart: true,
+        default: undefined as string | undefined,
+        description: oneLine`
+          The API base URL. Auto-filled for presets (nvidia-nim, ollama).
+          Required for openai-compatible.
+        `,
+        showInDialog: true,
+      },
+      apiKey: {
+        type: 'string',
+        label: 'API Key',
+        category: 'Model',
+        requiresRestart: true,
+        default: undefined as string | undefined,
+        description: oneLine`
+          API key for the provider. Supports $ENV_VAR syntax to reference
+          environment variables (e.g. "$NVIDIA_API_KEY"). Not needed for Ollama.
+        `,
+        showInDialog: false,
+      },
+      timeout: {
+        type: 'number',
+        label: 'Request Timeout',
+        category: 'Model',
+        requiresRestart: false,
+        default: 60000,
+        description: 'Request timeout in milliseconds.',
+        showInDialog: false,
+        unit: 'ms',
+      },
+      retryAttempts: {
+        type: 'number',
+        label: 'Retry Attempts',
+        category: 'Model',
+        requiresRestart: false,
+        default: 3,
+        description: 'Number of retry attempts for 429/502/503 errors.',
+        showInDialog: false,
+      },
+    },
+  },
+
   model: {
     type: 'object',
     label: 'Model',

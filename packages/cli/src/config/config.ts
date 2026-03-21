@@ -905,6 +905,7 @@ export async function loadCliConfig(
     recordResponses: argv.recordResponses,
     retryFetchErrors: settings.general?.retryFetchErrors,
     billing: settings.billing,
+    providerConfig: settings.provider,
     maxAttempts: settings.general?.maxAttempts,
     ptyInfo: ptyInfo?.name,
     disableLLMCorrection: settings.tools?.disableLLMCorrection,
