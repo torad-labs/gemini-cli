@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -18,6 +18,13 @@ export interface ModelCapabilities {
   supportsStreaming: boolean;
   maxContextTokens?: number;
 }
+
+/** Constant for the probe function name used in capability testing. */
+const CAPABILITY_PROBE_FUNCTION = '_capability_probe';
+
+/** Minimal 1x1 pixel PNG (base64) for vision capability probing. */
+const CAPABILITY_PROBE_IMAGE_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 const capabilityCache = new Map<string, ModelCapabilities>();
 
@@ -54,7 +61,7 @@ export async function probeCapabilities(
             {
               functionDeclarations: [
                 {
-                  name: '_capability_probe',
+                  name: CAPABILITY_PROBE_FUNCTION,
                   description: 'Test function for capability probing',
                   parameters: {
                     type: Type.OBJECT,
@@ -66,12 +73,40 @@ export async function probeCapabilities(
           ],
         },
       },
-      'capability-probe',
+      'capability-probe-tools',
       LlmRole.MAIN,
     );
     capabilities.supportsToolCalling = true;
   } catch {
     capabilities.supportsToolCalling = false;
+  }
+
+  // Probe vision by sending a minimal test image
+  try {
+    await provider.generateContent(
+      {
+        model,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: 'Describe this image.' },
+              {
+                inlineData: {
+                  mimeType: 'image/png',
+                  data: CAPABILITY_PROBE_IMAGE_BASE64,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'capability-probe-vision',
+      LlmRole.MAIN,
+    );
+    capabilities.supportsVision = true;
+  } catch {
+    capabilities.supportsVision = false;
   }
 
   capabilityCache.set(model, capabilities);

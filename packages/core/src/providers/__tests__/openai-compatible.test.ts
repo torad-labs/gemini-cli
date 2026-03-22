@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -57,6 +57,54 @@ describe('OpenAICompatibleContentGenerator', () => {
       contents: [{ role: 'user', parts: [{ text: 'Hello world' }] }],
     });
     expect(result.totalTokens).toBeGreaterThan(0);
+  });
+
+  it('estimates more tokens for code-like content', async () => {
+    const generator = createGenerator();
+    // Plain text: "Hello world" should use ~4 chars/token
+    const plainResult = await generator.countTokens({
+      model: 'test-model',
+      contents: [{ role: 'user', parts: [{ text: 'Hello world' }] }],
+    });
+
+    // Code: "function test() { return 1; }" should use ~3 chars/token
+    const codeResult = await generator.countTokens({
+      model: 'test-model',
+      contents: [
+        { role: 'user', parts: [{ text: 'function test() { return 1; }' }] },
+      ],
+    });
+
+    // Code should estimate more tokens per character
+    const plainTokens = plainResult.totalTokens ?? 0;
+    const codeTokens = codeResult.totalTokens ?? 0;
+    const plainRatio = plainTokens / 11; // "Hello world" length
+    const codeRatio = codeTokens / 27; // code string length
+    expect(codeRatio).toBeGreaterThanOrEqual(plainRatio);
+  });
+
+  it('estimates more tokens for non-ASCII content', async () => {
+    const generator = createGenerator();
+    // ASCII text
+    const asciiResult = await generator.countTokens({
+      model: 'test-model',
+      contents: [{ role: 'user', parts: [{ text: 'Hello world' }] }],
+    });
+
+    // Non-ASCII (Chinese) - should use ~2.5 chars/token
+    const unicodeResult = await generator.countTokens({
+      model: 'test-model',
+      contents: [
+        { role: 'user', parts: [{ text: '你好世界你好世界你好世界' }] },
+      ],
+    });
+
+    // Unicode should estimate more tokens per character
+    const asciiTokens = asciiResult.totalTokens ?? 0;
+    const unicodeTokens = unicodeResult.totalTokens ?? 0;
+    const asciiRatio = asciiTokens / 11;
+    const unicodeRatio = unicodeTokens / 15;
+    expect(unicodeRatio).toBeGreaterThanOrEqual(asciiRatio);
   });
 
   it('constructs correct OpenAI messages from Gemini request', () => {
