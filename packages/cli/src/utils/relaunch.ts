@@ -5,6 +5,7 @@
  */
 
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { RELAUNCH_EXIT_CODE } from './processUtils.js';
 import {
   writeToStderr,
@@ -45,7 +46,22 @@ export async function relaunchAppInChildProcess(
   const runner = () => {
     // process.argv is [node, script, ...args]
     // We want to construct [ ...nodeArgs, script, ...scriptArgs]
-    const script = process.argv[1];
+    // When launched via a shell wrapper (e.g. torad-code), argv[1] may be
+    // the wrapper script, not the JS entry point. Read the wrapper to
+    // extract the actual JS path, or fall back to argv[1].
+    let script = process.argv[1];
+    if (script && !script.endsWith('.js') && !script.endsWith('.mjs')) {
+      try {
+        const content = readFileSync(script, 'utf8');
+        // Look for "node <path>.js" in the wrapper script
+        const match = content.match(/node\s+(\S+\.js)/);
+        if (match?.[1]) {
+          script = match[1];
+        }
+      } catch {
+        // Can't read wrapper — use argv[1] as-is
+      }
+    }
     const scriptArgs = process.argv.slice(2);
 
     const nodeArgs = [

@@ -79,6 +79,7 @@
     "minimatch": "^10.2.2"
   },
   "bin": {
+    "torad-code": "bundle/gemini.js",
     "gemini": "bundle/gemini.js"
   },
   "files": [
