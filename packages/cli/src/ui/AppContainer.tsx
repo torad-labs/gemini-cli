@@ -794,7 +794,7 @@ export const AppContainer = (props: AppContainerProps) => {
         ) {
           writeToStdout(`
 ----------------------------------------------------------------
-Logging in with Google... Restarting Gemini CLI to continue.
+Logging in with Google... Restarting to continue.
 ----------------------------------------------------------------
           `);
           await relaunchApp();

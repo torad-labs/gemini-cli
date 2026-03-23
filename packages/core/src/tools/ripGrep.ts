@@ -58,7 +58,7 @@ let ripgrepAcquisitionPromise: Promise<string | null> | null = null;
  * Ensures a ripgrep binary is available.
  *
  * NOTE:
- * - The Gemini CLI currently prefers a managed ripgrep binary downloaded
+ * - torad-code currently prefers a managed ripgrep binary downloaded
  *   into its global bin directory.
  * - Even if ripgrep is available on the system PATH, it is intentionally
  *   not used at this time.

@@ -229,7 +229,7 @@ async function initOauthClient(
     if (!config.isInteractive()) {
       throw new FatalAuthenticationError(
         'Manual authorization is required but the current session is non-interactive. ' +
-          'Please run the Gemini CLI in an interactive terminal to log in, ' +
+          'Please run torad-code in an interactive terminal to log in, ' +
           'provide a GEMINI_API_KEY, or ensure Application Default Credentials are configured.',
       );
     }

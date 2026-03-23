@@ -184,7 +184,7 @@ exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snaps
 
 exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snapshot for tool: get_internal_docs 1`] = `
 {
-  "description": "Returns the content of Gemini CLI internal documentation files. If no path is provided, returns a list of all available documentation paths.",
+  "description": "Returns the content of internal documentation files. If no path is provided, returns a list of all available documentation paths.",
   "name": "get_internal_docs",
   "parametersJsonSchema": {
     "properties": {
@@ -235,7 +235,7 @@ exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snaps
 
 exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snapshot for tool: google_web_search 1`] = `
 {
-  "description": "Performs a web search using Google Search (via the Gemini API) and returns the results. This tool is useful for finding information on the internet based on a query.",
+  "description": "Performs a web search and returns the results. This tool is useful for finding information on the internet based on a query.",
   "name": "google_web_search",
   "parametersJsonSchema": {
     "properties": {

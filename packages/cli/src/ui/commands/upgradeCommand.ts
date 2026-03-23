@@ -20,7 +20,7 @@ import { CommandKind, type SlashCommand } from './types.js';
 export const upgradeCommand: SlashCommand = {
   name: 'upgrade',
   kind: CommandKind.BUILT_IN,
-  description: 'Upgrade your Gemini Code Assist tier for higher limits',
+  description: 'Upgrade your tier for higher limits',
   autoExecute: true,
   action: async (context) => {
     const config = context.services.agentContext?.config;

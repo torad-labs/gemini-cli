@@ -173,7 +173,7 @@ const MatchSnippetDisplay = ({
   }
 
   const firstMatch = session.matchSnippets[0];
-  const rolePrefix = firstMatch.role === 'user' ? 'You:   ' : 'Gemini:';
+  const rolePrefix = firstMatch.role === 'user' ? 'You:   ' : 'Agent: ';
   const roleColor = textColor(
     firstMatch.role === 'user' ? Colors.AccentGreen : Colors.AccentBlue,
   );

@@ -35,7 +35,7 @@ export async function waitForUpdateCompletion(
   }
 
   debugLogger.log(
-    '\nGemini CLI is waiting for a background update to complete before restarting...',
+    '\ntorad-code is waiting for a background update to complete before restarting...',
   );
 
   return new Promise((resolve) => {

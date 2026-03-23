@@ -107,7 +107,7 @@ export function getInstallationInfo(
             packageManager: PackageManager.HOMEBREW,
             isGlobal: true,
             updateMessage:
-              'Installed via Homebrew. Please update with "brew upgrade gemini-cli".',
+              'Installed via Homebrew. Please update with "brew upgrade torad-code".',
           };
         }
       } catch (_error) {

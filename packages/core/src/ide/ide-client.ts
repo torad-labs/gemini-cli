@@ -126,7 +126,7 @@ export class IdeClient {
     if (!this.currentIde) {
       this.setState(
         IDEConnectionStatus.Disconnected,
-        `IDE integration is not supported in your current environment. To use this feature, run Gemini CLI in one of these supported IDEs: Antigravity, VS Code, or VS Code forks.`,
+        `IDE integration is not supported in your current environment. To use this feature, run torad-code in one of these supported IDEs: Antigravity, VS Code, or VS Code forks.`,
         false,
       );
       return;

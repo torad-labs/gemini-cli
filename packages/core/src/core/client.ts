@@ -389,7 +389,7 @@ export class GeminiClient {
     } catch (error) {
       await reportError(
         error,
-        'Error initializing Gemini chat session.',
+        'Error initializing chat session.',
         history,
         'startChat',
       );
@@ -1056,22 +1056,28 @@ export class GeminiClient {
     try {
       const userMemory = this.config.getSystemInstructionMemory();
       const systemInstruction = getCoreSystemPrompt(this.config, userMemory);
-      const {
-        model,
-        config: newConfig,
-        maxAttempts: availabilityMaxAttempts,
-      } = applyModelSelection(this.config, modelConfigKey);
-      currentAttemptModel = model;
-      if (newConfig) {
-        currentAttemptGenerateContentConfig = newConfig;
+      let availabilityMaxAttempts: number | undefined;
+      if (!this.config.hasNonGoogleProvider()) {
+        const {
+          model,
+          config: newConfig,
+          maxAttempts,
+        } = applyModelSelection(this.config, modelConfigKey);
+        currentAttemptModel = model;
+        if (newConfig) {
+          currentAttemptGenerateContentConfig = newConfig;
+        }
+        availabilityMaxAttempts = maxAttempts;
       }
 
       // Define callback to refresh context based on currentAttemptModel which might be updated by fallback handler
       const getAvailabilityContext: () => RetryAvailabilityContext | undefined =
-        createAvailabilityContextProvider(
-          this.config,
-          () => currentAttemptModel,
-        );
+        this.config.hasNonGoogleProvider()
+          ? () => undefined
+          : createAvailabilityContextProvider(
+              this.config,
+              () => currentAttemptModel,
+            );
 
       let initialActiveModel = this.config.getActiveModel();
 

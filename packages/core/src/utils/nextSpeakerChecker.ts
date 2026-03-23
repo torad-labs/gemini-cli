@@ -129,7 +129,7 @@ export async function checkNextSpeaker(
     return null;
   } catch (error) {
     debugLogger.warn(
-      'Failed to talk to Gemini endpoint when seeing if conversation should continue.',
+      'Failed to talk to API endpoint when seeing if conversation should continue.',
       error,
     );
     return null;

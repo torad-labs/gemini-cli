@@ -338,7 +338,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
       isPreview: true,
       isVisible: true,
       dialogDescription:
-        'Let Gemini CLI decide the best model for the task: gemini-3-pro, gemini-3-flash',
+        'Let torad-code decide the best model for the task: gemini-3-pro, gemini-3-flash',
       features: { thinking: true, multimodalToolUse: false },
     },
     'auto-gemini-2.5': {
@@ -347,7 +347,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
       isPreview: false,
       isVisible: true,
       dialogDescription:
-        'Let Gemini CLI decide the best model for the task: gemini-2.5-pro, gemini-2.5-flash',
+        'Let torad-code decide the best model for the task: gemini-2.5-pro, gemini-2.5-flash',
       features: { thinking: false, multimodalToolUse: false },
     },
   },

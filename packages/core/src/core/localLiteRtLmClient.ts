@@ -77,9 +77,7 @@ export class LocalLiteRtLmClient {
 
       const text = result.text;
       if (!text) {
-        throw new Error(
-          'Invalid response from Local Gemini API: No text found',
-        );
+        throw new Error('Invalid response from local API: No text found');
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return

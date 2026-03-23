@@ -53,7 +53,7 @@ vi.mock('fs', () => ({
 
 vi.mock('os');
 
-const MEMORY_SECTION_HEADER = '## Gemini Added Memories';
+const MEMORY_SECTION_HEADER = '## Agent Added Memories';
 
 describe('MemoryTool', () => {
   const mockAbortSignal = new AbortController().signal;
@@ -266,10 +266,10 @@ describe('MemoryTool', () => {
         );
         expect(result.fileName).toContain('GEMINI.md');
         expect(result.fileDiff).toContain('Index: GEMINI.md');
-        expect(result.fileDiff).toContain('+## Gemini Added Memories');
+        expect(result.fileDiff).toContain('+## Agent Added Memories');
         expect(result.fileDiff).toContain('+- Test fact');
         expect(result.originalContent).toBe('');
-        expect(result.newContent).toContain('## Gemini Added Memories');
+        expect(result.newContent).toContain('## Agent Added Memories');
         expect(result.newContent).toContain('- Test fact');
       }
     });
@@ -347,7 +347,7 @@ describe('MemoryTool', () => {
     it('should handle existing memory file with content', async () => {
       const params = { fact: 'New fact' };
       const existingContent =
-        'Some existing content.\n\n## Gemini Added Memories\n- Old fact\n';
+        'Some existing content.\n\n## Agent Added Memories\n- Old fact\n';
 
       vi.mocked(fs.readFile).mockResolvedValue(existingContent);
 

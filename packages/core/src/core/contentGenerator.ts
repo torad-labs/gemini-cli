@@ -351,8 +351,8 @@ export async function createContentGenerator(
       process.env['GEMINI_CLI_CUSTOM_HEADERS'] || undefined;
     const clientName = gcConfig.getClientName();
     const userAgentPrefix = clientName
-      ? `GeminiCLI-${clientName}`
-      : 'GeminiCLI';
+      ? `torad-code-${clientName}`
+      : 'torad-code';
     const surface = determineSurface();
     const userAgent = `${userAgentPrefix}/${version}/${model} (${process.platform}; ${process.arch}; ${surface})`;
     const customHeadersMap = parseCustomHeaders(customHeadersEnv);

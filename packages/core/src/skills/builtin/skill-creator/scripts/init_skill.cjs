@@ -79,20 +79,20 @@ Executable code that can be run directly to perform specific operations.
 
 **Appropriate for:** Node.cjs scripts (cjs), shell scripts, or any executable code that performs automation, data processing, or specific operations.
 
-**Note:** Scripts may be executed without loading into context, but can still be read by Gemini CLI for patching or environment adjustments.
+**Note:** Scripts may be executed without loading into context, but can still be read by torad-code for patching or environment adjustments.
 
 ### references/
-Documentation and reference material intended to be loaded into context to inform Gemini CLI's process and thinking.
+Documentation and reference material intended to be loaded into context to inform torad-code's process and thinking.
 
 **Examples from other skills:**
 - Product management: communication.md, context_building.md - detailed workflow guides
 - BigQuery: API reference documentation and query examples
 - Finance: Schema documentation, company policies
 
-**Appropriate for:** In-depth documentation, API references, database schemas, comprehensive guides, or any detailed information that Gemini CLI should reference while working.
+**Appropriate for:** In-depth documentation, API references, database schemas, comprehensive guides, or any detailed information that torad-code should reference while working.
 
 ### assets/
-Files not intended to be loaded into context, but rather used within the output Gemini CLI produces.
+Files not intended to be loaded into context, but rather used within the output torad-code produces.
 
 **Examples from other skills:**
 - Brand styling: PowerPoint template files (.pptx), logo files

@@ -79,7 +79,7 @@ function migrateClaudeHook(claudeHook: unknown): unknown {
     migrated['command'] = hook['command'];
 
     // Replace CLAUDE_PROJECT_DIR with GEMINI_PROJECT_DIR in command
-    // eslint-disable-next-line no-restricted-syntax
+     
     if (typeof migrated['command'] === 'string') {
       migrated['command'] = migrated['command'].replace(
         /\$CLAUDE_PROJECT_DIR/g,
@@ -94,7 +94,7 @@ function migrateClaudeHook(claudeHook: unknown): unknown {
   }
 
   // Map timeout field (Claude uses seconds, Gemini uses seconds)
-  // eslint-disable-next-line no-restricted-syntax
+   
   if ('timeout' in hook && typeof hook['timeout'] === 'number') {
     migrated['timeout'] = hook['timeout'];
   }
@@ -142,7 +142,7 @@ function migrateClaudeHooks(claudeConfig: unknown): Record<string, unknown> {
       // Transform matcher
       if (
         'matcher' in definition &&
-        // eslint-disable-next-line no-restricted-syntax
+         
         typeof definition['matcher'] === 'string'
       ) {
         migratedDef['matcher'] = transformMatcher(definition['matcher']);
@@ -260,7 +260,7 @@ export async function handleMigrateFromClaude() {
 
 export const migrateCommand: CommandModule = {
   command: 'migrate',
-  describe: 'Migrate hooks from Claude Code to Gemini CLI',
+  describe: 'Migrate hooks from Claude Code to torad-code',
   builder: (yargs) =>
     yargs.option('from-claude', {
       describe: 'Migrate from Claude Code hooks',
@@ -274,7 +274,7 @@ export const migrateCommand: CommandModule = {
       await handleMigrateFromClaude();
     } else {
       debugLogger.log(
-        'Usage: gemini hooks migrate --from-claude\n\nMigrate hooks from Claude Code to Gemini CLI format.',
+        'Usage: torad-code hooks migrate --from-claude\n\nMigrate hooks from Claude Code to torad-code format.',
       );
     }
     await exitCli();

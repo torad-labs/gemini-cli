@@ -55,7 +55,7 @@ describe('FolderTrustDialog', () => {
 
     expect(lastFrame()).toContain('Do you trust the files in this folder?');
     expect(lastFrame()).toContain(
-      'Trusting a folder allows Gemini CLI to load its local configurations',
+      'Trusting a folder allows torad-code to load its local configurations',
     );
     unmount();
   });
@@ -251,7 +251,7 @@ describe('FolderTrustDialog', () => {
     );
     await waitUntilReady();
 
-    expect(lastFrame()).toContain('Gemini CLI is restarting');
+    expect(lastFrame()).toContain('torad-code is restarting');
     unmount();
   });
 

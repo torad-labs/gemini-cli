@@ -45,7 +45,7 @@ export const LoginWithGoogleRestartDialog = ({
   );
 
   const message =
-    "You've successfully signed in with Google. Gemini CLI needs to be restarted.";
+    "You've successfully signed in with Google. The CLI needs to be restarted.";
 
   return (
     <Box borderStyle="round" borderColor={theme.status.warning} paddingX={1}>

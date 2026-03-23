@@ -1,10 +1,10 @@
 {
-  "description": "Explicitly promoted tools from chrome-devtools-mcp for the gemini-cli browser agent.",
+  "description": "Explicitly promoted tools from chrome-devtools-mcp for the browser agent.",
   "targetVersion": "0.19.0",
   "exclude": [
     {
       "name": "lighthouse",
-      "reason": "3.5 MB pre-built bundle — not needed for gemini-cli browser agent's core tasks."
+      "reason": "3.5 MB pre-built bundle — not needed for browser agent's core tasks."
     },
     {
       "name": "performance",
@@ -16,7 +16,7 @@
     },
     {
       "name": "extensions",
-      "reason": "Extension management not relevant for the gemini-cli browser agent's current scope."
+      "reason": "Extension management not relevant for the browser agent's current scope."
     }
   ]
 }
